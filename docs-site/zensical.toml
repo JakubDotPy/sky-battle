@@ -5,6 +5,7 @@
 # Both must run from THIS directory; zensical looks for zensical.toml in the cwd.
 
 [project]
+site_url = "https://jakubdotpy.github.io/sky-battle/"
 site_name = "Sky Battle"
 site_description = "How to write a bot and how to host a tournament, for the Sky Battle plane-wars arena."
 site_author = "Jakub Červinka"
