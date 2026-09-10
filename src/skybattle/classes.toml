@@ -30,6 +30,12 @@ cone_deg = 120.0
 cone_range = 900.0
 rear_cone_deg = 0.0
 rear_cone_range = 0.0
+# Circular vision bubble, unioned with the cones above: whatever is this close is seen
+# regardless of heading, modelling a pilot looking around rather than just down the nose.
+# Kept well below gun reach (see each class's guns below) so the cone still matters for
+# anything the bubble does not already cover, and well above any class's turn circle
+# (~26-32 u) so a plane cannot rotate out of its own bubble.
+bubble_range = 120.0
 
   [[scout.guns]]
   name = "forward"
@@ -57,6 +63,7 @@ cone_deg = 70.0
 cone_range = 600.0
 rear_cone_deg = 0.0
 rear_cone_range = 0.0
+bubble_range = 150.0
 
   [[fighter.guns]]
   name = "forward"
@@ -84,6 +91,12 @@ cone_deg = 50.0
 cone_range = 450.0
 rear_cone_deg = 50.0
 rear_cone_range = 350.0
+# Largest bubble AND the narrowest cone of the three classes -- deliberate, not an oversight
+# a later balance pass should "fix". Multiple crew and many windows around the fuselage mean
+# a bomber is worst at SEARCHING (narrow cone) and best at already KNOWING what is on top of
+# it (big bubble): a lookout in the tail does not need to swing the plane's nose to notice a
+# fighter fifty units off the wing.
+bubble_range = 220.0
 
   [[bomber.guns]]
   name = "forward"

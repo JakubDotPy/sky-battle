@@ -81,7 +81,7 @@ def test_fat_replay_carries_derived_fields_so_a_viewer_needs_no_engine(tmp_path)
 
     plane = frame["planes"][0]
     for key in ("id", "squadron", "kind", "x", "y", "heading_deg", "speed", "hp", "alive",
-                "cone_deg", "cone_range", "rear_cone_deg", "rear_cone_range"):
+                "cone_deg", "cone_range", "rear_cone_deg", "rear_cone_range", "bubble_range"):
         assert key in plane, key
     assert plane["cone_range"] > 0.0                      # real geometry, not a placeholder
 
@@ -91,6 +91,23 @@ def test_fat_replay_carries_derived_fields_so_a_viewer_needs_no_engine(tmp_path)
     assert len(frame["bullets"]) == 1
     assert frame["bullets"][0][2] == sq_a                 # owned by the shooter's squadron
     assert "scores" in frame
+
+
+def test_fat_replay_carries_bubble_range_for_every_plane(tmp_path):
+    """The viewer draws the bubble from the recorded fact, never a hardcoded number -- so the
+    value must actually be each plane's class bubble, not merely a present-but-blank key."""
+    w = World(ARENA, SQ, CLASSES, seed=7)  # squadrons of scout + fighter, per class SQ
+    w.tick({p.squadron: {p.id: Action()} for p in w.planes.values()})
+
+    p = tmp_path / "fat.jsonl.gz"
+    with replay.FatWriter(p, replay.make_header(7, ARENA, SQ)) as wr:
+        wr.record(w)
+    _, ticks = replay.read(p)
+    frame = ticks[0]
+
+    assert frame["planes"]                                 # sanity: the frame is not empty
+    for plane in frame["planes"]:
+        assert plane["bubble_range"] == CLASSES[plane["kind"]].bubble_range
 
 
 def test_fat_replay_records_a_degraded_tick_badge(tmp_path):

@@ -106,6 +106,7 @@ class FatWriter(_Writer):
                     "cone_deg": p.cls.cone_deg, "cone_range": p.cls.cone_range,
                     "rear_cone_deg": p.cls.rear_cone_deg,
                     "rear_cone_range": p.cls.rear_cone_range,
+                    "bubble_range": p.cls.bubble_range,
                 }
                 for _, p in sorted(world.planes.items())
             ],

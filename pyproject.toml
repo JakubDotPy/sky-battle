@@ -9,7 +9,11 @@ dependencies = []
 sky-battle = "skybattle.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+    "zensical>=0.0.60",
+]
 
 [build-system]
 requires = ["hatchling"]

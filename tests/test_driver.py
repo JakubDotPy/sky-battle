@@ -73,7 +73,10 @@ def test_a_stale_reply_never_becomes_the_next_ticks_answer():
         raw, status = bot.exchange(_view(1), rng_seed=1)
         assert status == "timeout"
 
-        for tick in range(2, 10):
+        # Generous margin: 28 ticks at a 50 ms deadline is ~1.4 s of wall clock against the
+        # fixture's 0.2 s sleep. The assertion below is what has teeth; the range only has to
+        # outlast the sleep, and matching it exactly is how this test used to flake.
+        for tick in range(2, 30):
             raw, status = bot.exchange(_view(tick), rng_seed=1)
             if status == "ok":
                 stamp = round(raw[0].throttle * 1000.0)

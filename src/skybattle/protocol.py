@@ -10,10 +10,13 @@ import random
 from .state import Action, Contact, Gun, OwnPlane, View
 
 # ponytail: the wire format is positional, so OwnPlane's field LAYOUT is load-bearing here.
-# Deriving the scalar count keeps an appended scalar working, and checking the tail means a new
-# tuple-valued field fails at import instead of silently vanishing from every bot's view.
+# Deriving the scalar count keeps an appended scalar BEFORE the tuple fields working, and
+# checking the tail means a new field fails at import instead of silently vanishing from every
+# bot's view. `bubble_range` is a scalar appended AFTER the tuple fields (state.py appends
+# fields at the end, always), so it cannot join the `p[:_SCALARS]` prefix -- it gets its own
+# wire key instead, same as `guns` and `contacts` do.
 _SCALARS = OwnPlane._fields.index("guns")
-if OwnPlane._fields[_SCALARS:] != ("guns", "contacts"):
+if OwnPlane._fields[_SCALARS:] != ("guns", "contacts", "bubble_range"):
     raise RuntimeError(
         f"OwnPlane layout changed to {OwnPlane._fields!r}; update encode_view/decode_view"
     )
@@ -42,6 +45,7 @@ def encode_view(view: View, rng_seed: int | str) -> dict:
                 "p": list(p[:_SCALARS]),
                 "guns": [list(g) for g in p.guns],
                 "contacts": [list(c) for c in p.contacts],
+                "bubble_range": p.bubble_range,
             }
             for p in view.planes
         ],
@@ -61,6 +65,7 @@ def decode_view(payload: dict) -> View:
             contacts=tuple(Contact(int(c[0]), c[1], *(float(v) for v in c[2:6]), int(c[6]),
                                    float(c[7]), float(c[8]), tuple(int(i) for i in c[9]))
                            for c in entry["contacts"]),
+            bubble_range=float(entry["bubble_range"]),
         ))
     return View(
         tick=int(payload["tick"]),

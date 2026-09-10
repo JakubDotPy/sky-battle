@@ -380,4 +380,5 @@ class World:
                            muzzle_speed=g.muzzle_speed)
                        for i, g in enumerate(p.cls.guns)),
             contacts=contacts,
+            bubble_range=p.cls.bubble_range,
         )

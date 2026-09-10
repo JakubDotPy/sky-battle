@@ -1,7 +1,8 @@
 """Fog of war.
 
-Enforced BY CONSTRUCTION: each squadron's view is assembled from the union of its own cones.
-Never build a full world state with a `visible` flag on it -- that is a one-line cheat.
+Enforced BY CONSTRUCTION: each squadron's view is assembled from the union of its own cones
+and bubbles. Never build a full world state with a `visible` flag on it -- that is a one-line
+cheat.
 """
 
 import itertools
@@ -35,10 +36,28 @@ def in_cone(ox: float, oy: float, heading_deg: float, cone_deg: float, cone_rang
     return abs(bearing) <= cone_deg / 2.0
 
 
+def in_bubble(ox: float, oy: float, bubble_range: float,
+              tx: float, ty: float, w: float, h: float) -> bool:
+    """Whether (tx, ty) lies within a circular vision bubble of the given radius.
+
+    Heading-independent short-range awareness, unioned with the cones: a pilot looking
+    around, not just down the nose. Quantised to QUANT_RANGE, matching `in_cone`, for the
+    same reason -- an unrounded boundary comparison could flip visibility between two
+    people replaying the same match.
+    """
+    if bubble_range <= 0.0:
+        return False
+    return round(geom.distance(ox, oy, tx, ty, w, h), QUANT_RANGE) <= bubble_range
+
+
 def sees(observer, target, arena: tuple[float, float]) -> bool:
-    """Whether `observer` has `target` in either of its cones."""
+    """Whether `observer` has `target` in its vision bubble or either of its cones."""
     w, h = arena
     c = observer.cls
+    # Cheapest test first -- one distance, no bearing -- so it short-circuits the common
+    # close-range case before either cone check runs.
+    if in_bubble(observer.x, observer.y, c.bubble_range, target.x, target.y, w, h):
+        return True
     if in_cone(observer.x, observer.y, observer.heading_deg, c.cone_deg, c.cone_range,
                target.x, target.y, w, h):
         return True

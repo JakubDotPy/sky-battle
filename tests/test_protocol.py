@@ -12,7 +12,7 @@ def _view():
                 bearing_deg=-30.0, range=250.0, seen_by=(0, 1))
     p = OwnPlane(id=0, kind="scout", x=10.0, y=20.0, heading_deg=45.0, speed=5.0, hp=70,
                  hp_max=70, stall_speed=3.0, corner_speed=5.0, max_speed=9.0, guns=(g,),
-                 contacts=(c,))
+                 contacts=(c,), bubble_range=120.0)
     return View(tick=12, arena=(2000.0, 2000.0), planes=(p,), events=())
 
 
@@ -27,6 +27,7 @@ def test_view_survives_a_json_round_trip_as_typed_objects():
     assert isinstance(back.planes[0].contacts[0], Contact)
     assert back.planes[0].contacts[0].seen_by == (0, 1)
     assert back.planes[0].guns[0].cooldown_ticks_left == 2
+    assert back.planes[0].bubble_range == 120.0
 
 
 def test_the_rng_arrives_as_a_seeded_random_not_a_seed():
@@ -63,4 +64,4 @@ def test_the_encoder_pins_ownplane_layout():
     is exactly the one a hardcoded slice would drop without error.
     """
     assert protocol._SCALARS == OwnPlane._fields.index("guns")
-    assert OwnPlane._fields[protocol._SCALARS:] == ("guns", "contacts")
+    assert OwnPlane._fields[protocol._SCALARS:] == ("guns", "contacts", "bubble_range")

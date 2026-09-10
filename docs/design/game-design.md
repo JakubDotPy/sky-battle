@@ -69,6 +69,7 @@ principle above is not later read as a reason to reopen it.
 | Control inputs | **Continuous, not three-valued.** `steer` in [-1, +1], `throttle` in [0, 1] | A stick and a throttle lever have travel. It also gives energy management its dial: a gentle turn bleeds less speed than a hard one, which is the decision the whole flight model exists to create |
 | Squadron size | **2 first**, generalise to n | Two is enough to make coordination real; the API is written for n from the start |
 | Visibility | **Limited vision cone per plane** (fog of war) | Forced by the class design: a scout's wider cone is meaningless without it. Also the genre's main depth differentiator |
+| Close-range awareness | **Circular vision bubble per class, unioned with the cones** ([§8](#8-starting-class-table)) | Measured: half of all enemy pairs within 50 units — formation-flying distance — went undetected under cone-only vision, because a forward cone cannot see a target off its own beam or astern. The bubble models a pilot looking around; the cone stays the long-range search instrument |
 | Squadron vision | **Shared** between squadron-mates — "pilots giving each other shoutouts over radio" | Makes a scout an actual scout |
 | Arena | **Wrap-around torus**, no walls | Walls are silly for planes; no corners to camp in |
 | Class stats | **Data file, not code** | Balance is a permanent, ongoing problem; a balance pass must not be a code change |
@@ -325,13 +326,45 @@ which pairs with them already firing slower and hitting harder. The bomber's for
 slowest, *and* flies slowest — heavy artillery, coherently, and also the hardest of the four guns to lead, since a
 slow round gives a target longer to have moved by the time it arrives.
 
-**Vision cones:**
+**Vision cones and bubble:**
 
-| Class | Forward cone | Rear cone |
-|---|---|---|
-| Scout | 120 deg / 900 u | — |
-| Fighter | 70 deg / 600 u | — |
-| Bomber | 50 deg / 450 u | 50 deg / 350 u |
+| Class | Forward cone | Rear cone | Bubble |
+|---|---|---|---|
+| Scout | 120 deg / 900 u | — | 120 u |
+| Fighter | 70 deg / 600 u | — | 150 u |
+| Bomber | 50 deg / 450 u | 50 deg / 350 u | 220 u |
+
+### Vision bubble: close-range awareness, unioned with the cones
+
+**The evidence.** Three rounds of `leader.py` vs `chaser.py`, counting live enemy pairs by separation, against
+cone-only vision:
+
+```text
+  within    pairs   had contact    BLIND
+    50u       76      36 ( 47%)     52%
+   100u      162      84 ( 51%)     48%
+   150u      258     142 ( 55%)     44%
+```
+
+**Half the time an enemy is within 50 units — formation-flying distance — the squadron has no idea it is there**,
+because vision is a forward cone only and a close enemy sits outside the arc. That is not fog of war, it is an
+absurdity: a pilot with an enemy fifty metres off the wing knows about it.
+
+**The fix is a per-class circular vision bubble, unioned with the existing cones**: whatever is this close is seen
+regardless of heading. It splits vision into two jobs. The **cone** stays a long-range *search* instrument — the
+scout's speciality, still the widest and longest of the three. The **bubble** is short-range *situational
+awareness*, which makes the close-in turning fight about flying rather than about whose cone happened to sweep the
+right way.
+
+**The bomber has the largest bubble and the narrowest cone, deliberately.** Multiple crew and many windows around
+the fuselage mean it is worst at spotting something coming and best at knowing what is already on top of it. A
+later balance pass should read this paragraph before "fixing" that inversion — it is not an oversight.
+
+**Bubble range sits at roughly 25% of each class's gun reach** (308–680 u — see the muzzle-speed reach figures
+further down this section). That ceiling matters: if the bubble approached gun range, a plane could shoot
+everything it could see and the cone would stop mattering. Bubble ranges are also far larger than any class's turn
+circle (~26–32 u), so a plane cannot rotate out of its own bubble — awareness stays stable rather than flickering
+as the nose swings.
 
 > **These numbers are placeholders awaiting a dedicated balance pass.** Known already: the scout should be weaker
 > than shown — lower HP — since its wide cone is its whole identity and it should not also be durable.

@@ -88,6 +88,13 @@ class OwnPlane(NamedTuple):
     contact ids; only the geometry differs per reader. `Contact.seen_by` says which of my
     planes actually has eyes on it, which is what makes a scout a scout.
     """
+    bubble_range: float = 0.0
+    """Radius of this plane's own circular vision bubble, unioned with its cones.
+
+    Heading-independent: anything this close is seen regardless of where the nose points.
+    Appended last, after `contacts` -- see protocol.py, whose wire format treats it as its
+    own key rather than assuming the tuple-valued tail stays contiguous.
+    """
 
 
 class HitByBullet(NamedTuple):

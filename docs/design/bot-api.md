@@ -354,8 +354,8 @@ through reflection, each fixed by disabling the offending robot at runtime.
 
 - **Frozen, tuple-based payload built fresh per squadron per tick, with no back-pointers.** The leak to grep for is
   a field path like `state.contacts[0].world`.
-- **Enforce fog by construction.** Build each squadron's payload from the union of its own cones. Never hand over
-  the full world with a `visible` flag — that is a one-line cheat.
+- **Enforce fog by construction.** Build each squadron's payload from the union of its own cones and bubbles. Never
+  hand over the full world with a `visible` flag — that is a one-line cheat.
 - **Anonymise opponents:** no author names, no file names, no bot names in the payload. Opponents are `squadron 0`
   and `squadron 1`. This makes `if opponent == "alice": cooperate` unwritable.
 - **Quantise every observable a bot controls.** Firepower is a per-gun constant, not a float the bot picks. This is

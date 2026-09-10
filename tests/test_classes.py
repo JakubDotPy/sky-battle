@@ -51,6 +51,7 @@ cone_deg = 120.0
 cone_range = 900.0
 rear_cone_deg = 0.0
 rear_cone_range = 0.0
+bubble_range = 120.0
 [[scout.guns]]
 name = "forward"
 bearing_deg = 0.0
@@ -68,6 +69,28 @@ def test_rejects_a_cone_longer_than_half_the_arena(tmp_path):
     bad.write_text(_MINIMAL_BAD_TABLE)
     with pytest.raises(ValueError, match="cone_range"):
         load_classes(bad, arena=(1000.0, 1000.0))
+
+
+def test_a_negative_bubble_range_is_rejected(tmp_path):
+    bad = tmp_path / "bubble.toml"
+    bad.write_text(_MINIMAL_BAD_TABLE.replace("bubble_range = 120.0", "bubble_range = -1.0"))
+    with pytest.raises(ValueError, match="bubble_range"):
+        load_classes(bad)
+
+
+def test_a_zero_bubble_range_loads_fine(tmp_path):
+    """Zero is legal: no bubble, not an error."""
+    good = tmp_path / "nobubble.toml"
+    good.write_text(_MINIMAL_BAD_TABLE.replace("bubble_range = 120.0", "bubble_range = 0.0"))
+    cs = load_classes(good)
+    assert cs["scout"].bubble_range == 0.0
+
+
+def test_rejects_a_bubble_larger_than_half_the_arena(tmp_path):
+    bad = tmp_path / "bigbubble.toml"
+    bad.write_text(_MINIMAL_BAD_TABLE.replace("cone_range = 900.0", "cone_range = 100.0"))
+    with pytest.raises(ValueError, match="bubble_range"):
+        load_classes(bad, arena=(200.0, 200.0))  # limit 100; bubble_range 120 exceeds it
 
 
 def test_a_missing_guns_block_names_the_class_and_the_header(tmp_path):

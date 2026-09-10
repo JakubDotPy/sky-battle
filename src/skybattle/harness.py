@@ -48,6 +48,7 @@ def plane(id: int = 0, kind: str = "fighter", x: float = 100.0, y: float = 100.0
                       muzzle_speed=g.muzzle_speed)
                    for g in cls.guns),
         contacts=contacts,
+        bubble_range=cls.bubble_range,
     )
 
 

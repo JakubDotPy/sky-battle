@@ -1,12 +1,135 @@
-"""The command line. `duel` is the whole of this plan's user interface."""
+"""The command line. `duel` runs a match; `serve` hands a finished one to a browser.
+
+`serve` is a stdlib `http.server` only: no framework, no build step. Replays are already gzipped
+on disk, so the replay route forwards those bytes unchanged with `Content-Encoding: gzip` -- the
+browser's own `fetch` gunzips them, and nothing here ever holds a whole replay decompressed.
+"""
 
 import argparse
+import functools
+import http.server
+import json
+import webbrowser
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
+from . import replay
 from .classes import DEFAULT_TABLE, load_classes
 from .match import run_match
 
 DEFAULT_SQUADRON = ["scout", "fighter"]
+
+VIEWER_DIR = Path(__file__).parent / "viewer"
+
+
+def _rounds_index(replay_dir: Path) -> list[dict]:
+    """List `*.fat.jsonl.gz` rounds, newest first, with header facts plus a frame count.
+
+    Reading each file in full to count frames costs real time at scale -- a round is ~41 KB /
+    831 frames, so this is cheap here -- but it is a whole-file read per round, not a header peek.
+    """
+    rounds = []
+    paths = sorted(replay_dir.glob("*.fat.jsonl.gz"), key=lambda p: p.stat().st_mtime, reverse=True)
+    for path in paths:
+        header, ticks = replay.read(path)
+        rounds.append({
+            "name": path.name,
+            "seed": header["seed"],
+            "bots": header["bots"],
+            "frames": len(ticks),
+        })
+    return rounds
+
+
+class _ViewerHandler(http.server.BaseHTTPRequestHandler):
+    """Four routes: the viewer page, its script, the round index, and replay bytes."""
+
+    def __init__(self, *args: object, replay_dir: Path, **kwargs: object) -> None:
+        self.replay_dir = replay_dir
+        super().__init__(*args, **kwargs)
+
+    def do_GET(self) -> None:
+        path = unquote(urlsplit(self.path).path)
+        if path == "/":
+            self._serve_file(VIEWER_DIR / "index.html", "text/html; charset=utf-8")
+        elif path == "/viewer.js":
+            self._serve_file(VIEWER_DIR / "viewer.js", "text/javascript; charset=utf-8")
+        elif path == "/rounds.json":
+            body = json.dumps(_rounds_index(self.replay_dir)).encode()
+            self._respond(200, body, "application/json")
+        elif path.startswith("/replay/"):
+            self._serve_replay(path.removeprefix("/replay/"))
+        else:
+            self._respond(404, b"not found", "text/plain")
+
+    def _serve_file(self, path: Path, content_type: str) -> None:
+        if not path.is_file():
+            self._respond(404, b"not found", "text/plain")
+            return
+        self._respond(200, path.read_bytes(), content_type)
+
+    def _serve_replay(self, name: str) -> None:
+        # Resolve and check containment -- a textual ".." reject is not enough (encoded dots,
+        # an absolute-looking name that pathlib would otherwise splice in as-is).
+        target = (self.replay_dir / name).resolve()
+        try:
+            target.relative_to(self.replay_dir.resolve())
+        except ValueError:
+            self._respond(403, b"forbidden", "text/plain")
+            return
+        if not target.is_file():
+            self._respond(404, b"not found", "text/plain")
+            return
+
+        # The one trick that matters: these bytes are already gzip on disk. Ship them as-is and
+        # say so, so the browser's own fetch gunzips them -- never decompress here.
+        data = target.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Encoding", "gzip")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _respond(self, status: int, body: bytes, content_type: str) -> None:
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, fmt: str, *args: object) -> None:
+        pass  # quiet by default; nothing here is worth a request log line
+
+
+def make_server(replay_dir: Path, port: int = 8765) -> http.server.ThreadingHTTPServer:
+    """Bind a viewer server to `replay_dir`. `port=0` lets the OS pick a free one.
+
+    Loopback only -- this serves local files from whatever directory the caller names, and has
+    no business being reachable from the network.
+    """
+    handler = functools.partial(_ViewerHandler, replay_dir=Path(replay_dir))
+    return http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
+
+
+def _serve(replay_dir: Path, port: int, open_browser: bool) -> int:
+    if not replay_dir.is_dir():
+        print(f"error: not a directory: {replay_dir}")
+        return 1
+
+    server = make_server(replay_dir, port=port)
+    host, bound_port = server.server_address[:2]
+    url = f"http://{host}:{bound_port}/"
+    print(f"serving {replay_dir} at {url}")
+    if open_browser:
+        webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -23,9 +146,15 @@ def main(argv: list[str] | None = None) -> int:
     duel.add_argument("--replay-dir", type=Path, default=None)
     duel.add_argument("--rules", action="store_true", help="print the class table and exit")
 
+    serve = subs.add_parser("serve", help="serve a replay directory to a browser")
+    serve.add_argument("replay_dir", type=Path)
+    serve.add_argument("--port", type=int, default=8765)
+    serve.add_argument("--no-open", action="store_true", help="do not launch a browser")
+
     args = parser.parse_args(argv)
-    if args.command != "duel":
-        parser.error(f"unknown command {args.command}")
+
+    if args.command == "serve":
+        return _serve(args.replay_dir, port=args.port, open_browser=not args.no_open)
 
     if args.rules:
         # The numbers ARE the game; nobody should have to read source for them.

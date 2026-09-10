@@ -36,6 +36,7 @@ class PlaneClass(NamedTuple):
     cone_range: float
     rear_cone_deg: float
     rear_cone_range: float
+    bubble_range: float
     guns: tuple[GunSpec, ...]
 
 
@@ -76,9 +77,12 @@ def _check(c: PlaneClass, arena: tuple[float, float] | None) -> None:
                          f"{c.turn_at_stall} / {c.turn_at_corner} / {c.turn_at_max} at "
                          f"stall / corner / max; otherwise flying at stall speed and "
                          f"pirouetting is the dominant strategy")
+    if c.bubble_range < 0:
+        raise ValueError(f"{c.name}: bubble_range must be >= 0, got {c.bubble_range}")
     if arena is not None:
         limit = min(arena) / 2.0
-        for label, r in (("cone_range", c.cone_range), ("rear_cone_range", c.rear_cone_range)):
+        for label, r in (("cone_range", c.cone_range), ("rear_cone_range", c.rear_cone_range),
+                         ("bubble_range", c.bubble_range)):
             if r > limit:
                 raise ValueError(f"{c.name}: {label} {r} exceeds half the shorter arena "
                                  f"dimension ({limit}); fog would be meaningless")

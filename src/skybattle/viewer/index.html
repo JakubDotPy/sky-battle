@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sky-battle replay viewer</title>
+<style>
+/*
+ * Instrument-panel palette. Near-black ground, thin bright strokes, monospace
+ * labels -- an oscilloscope reading a replay, not a game UI. Squadron hues
+ * (cyan / amber) are chosen to both read clearly against --bg.
+ */
+:root {
+  --bg: #05080a;
+  --panel: #0b1114;
+  --grid: rgba(140, 200, 210, 0.10);
+  --border: #3a5560;
+  --text: #b9d6cf;
+  --text-dim: #5c7570;
+  --accent: #7cffcb;
+  --squadron-0: #4fd6ff;
+  --squadron-1: #ffb454;
+  --dead: #566;
+  --warn: #ff5f5f;
+  --hp-track: rgba(140, 200, 210, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  flex-wrap: wrap;
+}
+
+header .label { color: var(--text-dim); }
+
+#tick-readout { color: var(--accent); }
+
+.score {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+#score-0 { color: var(--squadron-0); border-color: var(--squadron-0); }
+#score-1 { color: var(--squadron-1); border-color: var(--squadron-1); }
+
+#degraded-badge {
+  padding: 0.1rem 0.5rem;
+  border-radius: 2px;
+  background: var(--warn);
+  color: #1a0505;
+  font-weight: 600;
+}
+
+#bot-names { color: var(--text-dim); margin-left: auto; }
+#bot-names .bot-0 { color: var(--squadron-0); }
+#bot-names .bot-1 { color: var(--squadron-1); }
+
+#round-select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.3rem;
+}
+
+main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+/* Squadron panel -- down one side, compact. The arena stays the subject. */
+#panel {
+  width: 210px;
+  flex: none;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  padding: 0.5rem;
+  font-size: 0.72rem;
+}
+
+.sq-block { margin-bottom: 0.7rem; }
+.sq-block:last-child { margin-bottom: 0; }
+
+.sq-head {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.plane-row {
+  padding: 0.2rem 0.25rem;
+  margin-bottom: 0.15rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+
+.plane-row:hover { border-color: var(--border); }
+.plane-row.selected { border-color: var(--accent); }
+.plane-row.dead { opacity: 0.5; }
+
+.plane-label { display: flex; justify-content: space-between; }
+
+.hp-bar {
+  height: 4px;
+  margin: 0.2rem 0;
+  background: var(--hp-track);
+}
+
+.hp-fill { height: 100%; }
+
+.plane-sub { color: var(--text-dim); }
+
+#arena-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+#arena {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#status {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.9rem;
+  color: var(--warn);
+  font-size: 0.85rem;
+}
+
+#selection {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.9rem;
+  padding: 0.35rem 0.55rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: pre-line;
+  pointer-events: none;
+}
+
+footer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+
+footer button {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+}
+
+footer button:hover { border-color: var(--accent); color: var(--accent); }
+footer button.active { border-color: var(--accent); color: var(--accent); }
+
+#scrub-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+#scrub {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+/* Small marks under the track for ticks whose degraded[] is non-empty --
+   built once per replay load, not redrawn per frame. */
+#degraded-ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  pointer-events: none;
+}
+
+#degraded-ticks span {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 3px;
+  background: var(--warn);
+}
+
+#frame-readout {
+  color: var(--text-dim);
+  min-width: 9ch;
+  text-align: right;
+  font-size: 0.8rem;
+}
+
+.speed-group { display: flex; gap: 0.2rem; }
+</style>
+</head>
+<body>
+<header>
+  <span><span class="label">TICK</span> <span id="tick-readout">--</span></span>
+  <span class="score" id="score-0">SQ0 --</span>
+  <span class="score" id="score-1">SQ1 --</span>
+  <span id="degraded-badge" hidden></span>
+  <span id="bot-names"></span>
+  <select id="round-select" hidden></select>
+</header>
+
+<main>
+  <aside id="panel"></aside>
+  <div id="arena-wrap">
+    <canvas id="arena"></canvas>
+    <div id="status"></div>
+    <div id="selection" hidden></div>
+  </div>
+</main>
+
+<footer>
+  <button id="step-back" title="Step back (Left arrow)">&laquo;</button>
+  <button id="play" title="Play / pause (Space)">Play</button>
+  <button id="step-fwd" title="Step forward (Right arrow)">&raquo;</button>
+  <div id="scrub-wrap">
+    <input id="scrub" type="range" min="0" max="0" value="0" step="1">
+    <div id="degraded-ticks"></div>
+  </div>
+  <span id="frame-readout">0 / 0</span>
+  <div class="speed-group">
+    <button id="speed-1" class="active" data-speed="1">1x</button>
+    <button id="speed-2" data-speed="2">2x</button>
+    <button id="speed-4" data-speed="4">4x</button>
+  </div>
+</footer>
+
+<script src="viewer.js"></script>
+</body>
+</html>

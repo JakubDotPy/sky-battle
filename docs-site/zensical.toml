@@ -1,0 +1,23 @@
+# Zensical config for the player-facing Sky Battle docs site.
+# Build: `uv run zensical build` from this directory. Output lands in `site/` (see site_dir
+# below) and is not committed -- see docs/index.md and the report for how to serve it locally.
+
+[project]
+site_name = "Sky Battle"
+site_description = "How to write a bot and how to host a tournament, for the Sky Battle plane-wars arena."
+docs_dir = "docs"
+site_dir = "site"
+
+nav = [
+  "index.md",
+  { "Plane classes" = "classes.md" },
+  { "Writing a bot" = "writing-a-bot.md" },
+  { "Running a game" = "running-a-game.md" },
+  "reference.md",
+]
+
+[project.markdown_extensions]
+zensical.extensions.macros = {}
+admonition = {}
+pymdownx.details = {}
+pymdownx.superfences = {}
