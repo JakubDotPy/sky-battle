@@ -4,6 +4,9 @@ Teaches the steer sign and torus-correct bearing -- and teaches why it always MI
 it aims where the target is rather than where it will be. That is rung 3's problem.
 """
 
+# Anything works, but a scout's wider cone finds targets sooner for a bot this simple.
+SQUADRON = ["scout", "fighter"]
+
 from skybattle.state import Action
 
 ON_TARGET_DEG = 6.0

@@ -6,6 +6,10 @@ where a contact was last seen, because the engine keeps none: re-acquisition min
 contact id, so a plane that keeps eyes on a target is worth more than one that glances.
 """
 
+# NOT arbitrary: `act` branches on `p.kind == "scout"` to split spotting from shooting,
+# so drop the scout and the whole role division silently does nothing.
+SQUADRON = ["scout", "fighter"]
+
 from skybattle import geom
 from skybattle.state import Action
 

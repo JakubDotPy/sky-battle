@@ -1,12 +1,24 @@
 # Zensical config for the player-facing Sky Battle docs site.
-# Build: `uv run zensical build` from this directory. Output lands in `site/` (see site_dir
-# below) and is not committed -- see docs/index.md and the report for how to serve it locally.
+#
+# Build:  `uv run zensical build`  -> static output in site/ (not committed)
+# Serve:  `uv run zensical serve`  -> http://localhost:8000, rebuilds on edit
+# Both must run from THIS directory; zensical looks for zensical.toml in the cwd.
 
 [project]
 site_name = "Sky Battle"
 site_description = "How to write a bot and how to host a tournament, for the Sky Battle plane-wars arena."
+site_author = "Jakub Červinka"
 docs_dir = "docs"
 site_dir = "site"
+
+# Derived from the origin remote, which drives the header repo link, the social
+# icon, and the per-page "edit"/"view source" actions.
+repo_name = "JakubDotPy/sky-battle"
+repo_url = "https://github.com/JakubDotPy/sky-battle"
+edit_uri = "edit/main/docs-site/docs/"
+
+copyright = "Written for people who would rather program a dogfight than fly one."
+
 
 nav = [
   "index.md",
@@ -19,5 +31,69 @@ nav = [
 [project.markdown_extensions]
 zensical.extensions.macros = {}
 admonition = {}
+attr_list = {}
+md_in_html = {}
+footnotes = {}
 pymdownx.details = {}
 pymdownx.superfences = {}
+pymdownx.inlinehilite = {}
+pymdownx.highlight = { anchor_linenums = true, line_spans = "__span", pygments_lang_class = true }
+
+[project.theme]
+# Squadron colours from the replay viewer: cyan and amber. The docs and the
+# arena should look like the same project.
+features = [
+  # Code blocks: a copy button, annotation tooltips, and line-range selection.
+  "content.code.copy",
+  "content.code.annotate",
+  "content.code.select",
+
+  # Per-page links back to the repo, which only work because repo_url is set.
+  "content.action.edit",
+  "content.action.view",
+
+  # Footnotes and abbreviations as inline tooltips rather than jumps.
+  "content.footnote.tooltips",
+  "content.tooltips",
+  "content.tabs.link",
+
+  # Navigation: XHR page swaps with prefetch on hover, a breadcrumb, grouped
+  # sections, a back-to-top button, and anchor tracking in the address bar.
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.indexes",
+  "navigation.footer",
+  "navigation.top",
+  "navigation.tracking",
+
+  # Highlight every occurrence after following a search hit.
+  "search.highlight",
+  "search.suggest",
+]
+
+[project.theme.font]
+text = "Inter"
+code = "JetBrains Mono"
+
+[project.theme.icon]
+repo = "fontawesome/brands/github"
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "cyan"
+accent = "amber"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "cyan"
+accent = "amber"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/JakubDotPy/sky-battle"

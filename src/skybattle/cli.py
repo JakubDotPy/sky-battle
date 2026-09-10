@@ -1,4 +1,5 @@
-"""The command line. `duel` runs a match; `serve` hands a finished one to a browser.
+"""The command line. `play` runs a host's declared game file; `duel` is the two-bot shortcut;
+`serve` hands a finished match to a browser.
 
 `serve` is a stdlib `http.server` only: no framework, no build step. Replays are already gzipped
 on disk, so the replay route forwards those bytes unchanged with `Content-Encoding: gzip` -- the
@@ -15,7 +16,8 @@ from urllib.parse import unquote, urlsplit
 
 from . import replay
 from .classes import DEFAULT_TABLE, load_classes
-from .match import run_match
+from .game import Game, check_squadron, load_game, read_squadron
+from .match import MatchResult, run_match
 
 DEFAULT_SQUADRON = ["scout", "fighter"]
 
@@ -112,6 +114,59 @@ def make_server(replay_dir: Path, port: int = 8765) -> http.server.ThreadingHTTP
     return http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
 
 
+def _print_result_lines(result: MatchResult, labels: dict[int, str]) -> None:
+    """One line per squadron: name, points, accepted N/total, strikes, forfeits.
+
+    Shared by `duel` and `play` so the two commands report in one format; each caller prints
+    its own winner line afterward, since `play` names the host's player, not a squadron index.
+    """
+    for sq in sorted(result.totals):
+        acc = sum(r.accepted[sq] for r in result.rounds)
+        ticks = sum(r.ticks for r in result.rounds)
+        strikes = sum(r.strikes[sq] for r in result.rounds)
+        forfeits = sum(1 for r in result.rounds if r.forfeited[sq])
+        print(f"squadron {sq} ({labels[sq]}): {result.totals[sq]:8.1f} points  "
+              f"accepted {acc}/{ticks}  strikes {strikes}  forfeits {forfeits}")
+
+
+def _squadron_for(bot_path: Path, classes: dict) -> list[str]:
+    """duel's composition: the bot's own SQUADRON if it declares one, else the historic default.
+
+    Unlike `play`, duel has no `planes_per_player` to enforce -- two bots may field different
+    squadron sizes; the engine already handles squadrons of any length.
+    """
+    squadron = read_squadron(bot_path)
+    if squadron is None:
+        return list(DEFAULT_SQUADRON)
+    check_squadron(bot_path, squadron, classes, planes_per_player=len(squadron))
+    return squadron
+
+
+def _play(game_file: Path, replay_dir: Path | None) -> int:
+    try:
+        game: Game = load_game(game_file)
+    except ValueError as exc:
+        print(f"error: {exc}")
+        return 1
+
+    squadrons = [p.squadron for p in game.players]
+    classes = load_classes(arena=game.arena)
+    result = run_match([p.bot for p in game.players], squadrons, seed=game.seed,
+                       rounds=game.rounds, arena=game.arena, classes=classes,
+                       deadline=game.deadline, replay_dir=replay_dir,
+                       round_tick_limit=game.ticks_per_round)
+
+    # Just the player's name -- `_print_result_lines` already wraps it in one pair of
+    # parens, so adding the bot filename here too would nest it redundantly, e.g.
+    # "squadron 0 (jakub (jakub.py))"; the host already has the name-to-bot mapping in
+    # their own game file.
+    labels = {i: p.name for i, p in enumerate(game.players)}
+    _print_result_lines(result, labels)
+    winner = "draw" if result.winner is None else game.players[result.winner].name
+    print(f"winner: {winner}")
+    return 0
+
+
 def _serve(replay_dir: Path, port: int, open_browser: bool) -> int:
     if not replay_dir.is_dir():
         print(f"error: not a directory: {replay_dir}")
@@ -146,6 +201,10 @@ def main(argv: list[str] | None = None) -> int:
     duel.add_argument("--replay-dir", type=Path, default=None)
     duel.add_argument("--rules", action="store_true", help="print the class table and exit")
 
+    play = subs.add_parser("play", help="run a match from a host's game file")
+    play.add_argument("game_file", type=Path)
+    play.add_argument("--replay-dir", type=Path, default=None)
+
     serve = subs.add_parser("serve", help="serve a replay directory to a browser")
     serve.add_argument("replay_dir", type=Path)
     serve.add_argument("--port", type=int, default=8765)
@@ -155,6 +214,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "serve":
         return _serve(args.replay_dir, port=args.port, open_browser=not args.no_open)
+
+    if args.command == "play":
+        return _play(args.game_file, replay_dir=args.replay_dir)
 
     if args.rules:
         # The numbers ARE the game; nobody should have to read source for them.
@@ -166,20 +228,18 @@ def main(argv: list[str] | None = None) -> int:
 
     arena = (args.arena[0], args.arena[1])
     classes = load_classes(arena=arena)     # validates cone ranges against this arena
-    squadrons = [list(DEFAULT_SQUADRON), list(DEFAULT_SQUADRON)]
+    try:
+        squadrons = [_squadron_for(args.bot_a, classes), _squadron_for(args.bot_b, classes)]
+    except ValueError as exc:
+        print(f"error: {exc}")
+        return 1
 
     result = run_match([args.bot_a, args.bot_b], squadrons, seed=args.seed,
                        rounds=args.rounds, arena=arena, classes=classes,
                        deadline=args.deadline, replay_dir=args.replay_dir)
 
-    names = {0: args.bot_a.name, 1: args.bot_b.name}
-    for sq in sorted(result.totals):
-        acc = sum(r.accepted[sq] for r in result.rounds)
-        ticks = sum(r.ticks for r in result.rounds)
-        strikes = sum(r.strikes[sq] for r in result.rounds)
-        forfeits = sum(1 for r in result.rounds if r.forfeited[sq])
-        print(f"squadron {sq} ({names[sq]}): {result.totals[sq]:8.1f} points  "
-              f"accepted {acc}/{ticks}  strikes {strikes}  forfeits {forfeits}")
+    labels = {0: args.bot_a.name, 1: args.bot_b.name}
+    _print_result_lines(result, labels)
     print(f"winner: {'draw' if result.winner is None else f'squadron {result.winner}'}")
     return 0
 

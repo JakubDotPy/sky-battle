@@ -265,8 +265,13 @@ clock is the rule.
 
 ### Squadron composition
 
-**Mandated and symmetric:** at squadron size 2, exactly one scout and one fighter; at size 3, add the bomber. Both
-sides field the same composition.
+**Free choice, by deliberate override of the analysis below.** Each player declares their own squadron -- any mix
+of classes, any order -- in their bot file; the host only fixes how many planes per player. The mandated-and-symmetric
+design this section argued for was implemented as designed, then overruled: the risk (free choice plus asymmetric
+classes tends to collapse into a monoculture) is accepted rather than engineered around, on the judgment that the
+balancing is close enough and a small group of trusted players is not going to minmax it into the ground. The
+research below is kept as the record of that tradeoff, not as a description of current behaviour -- if the meta
+ever does collapse into one dominant composition, this is the reasoning to revisit first.
 
 This is the one place the research was emphatic, and the evidence is not flattering to free choice. Battlecode
 offers asymmetric units and every documented year collapsed the same way: 2019's "nearly every top team used a

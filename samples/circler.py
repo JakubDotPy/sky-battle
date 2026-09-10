@@ -5,6 +5,9 @@ sit still -- stall speed is above zero -- so "sit and shoot" becomes tightest-ci
 which is itself the lesson.
 """
 
+# Anything works: every plane flies the same tight circle regardless of kind.
+SQUADRON = ["scout", "fighter"]
+
 from skybattle.state import Action
 
 ON_TARGET_DEG = 8.0

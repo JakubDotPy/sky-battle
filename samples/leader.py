@@ -7,6 +7,9 @@ on flight time. Two fixed-point iterations converge well inside a plane's radius
 written out here rather than handed over as a helper.
 """
 
+# Anything works. The fighter's tighter turn helps it hold the lead point it computes.
+SQUADRON = ["scout", "fighter"]
+
 from skybattle import geom
 from skybattle.state import Action
 

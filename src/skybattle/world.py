@@ -55,10 +55,14 @@ class World:
     """
 
     def __init__(self, arena: tuple[float, float], squadrons: list[list[str]],
-                 classes: dict[str, PlaneClass], seed: int) -> None:
+                 classes: dict[str, PlaneClass], seed: int,
+                 round_tick_limit: int = ROUND_TICK_LIMIT,
+                 inactivity_ticks: int = INACTIVITY_TICKS) -> None:
         self.arena = arena
         self.classes = classes
         self.seed = seed
+        self.round_tick_limit = round_tick_limit
+        self.inactivity_ticks = inactivity_ticks
         self.rng = random.Random(seed)
         """The engine's own stream: spawn jitter (drawn once, below) and, every tick, each
         round's dispersion (drawn in `_fire`). Never handed to a bot -- a bot drawing from this
@@ -216,8 +220,17 @@ class World:
         self.bullets = alive
 
     def _resolve_hits(self) -> None:
+        """Apply hits in the order they actually occurred within the tick, not spawn order.
+
+        Two rounds converging on a dying plane must credit whichever one struck FIRST
+        (smallest `swept_hit` fraction `t`), not whichever bullet happens to be processed
+        first. So: gather one candidate per bullet (its earliest hit, same selection as
+        before), then apply candidates in ascending `t`. A target already killed by an
+        earlier-applied candidate is not hit again, and its bullet survives unconsumed --
+        exactly as if that bullet's target had never been there to hit.
+        """
         w, h = self.arena
-        spent: set[int] = set()
+        candidates: list[tuple[float, int, Plane]] = []
         for idx, (b, dx, dy) in enumerate(self._segments):
             best: tuple[float, Plane] | None = None
             for pid in sorted(self.planes):
@@ -228,9 +241,16 @@ class World:
                                       b.x, b.y, dx, dy, w, h)
                 if t is not None and (best is None or t < best[0]):
                     best = (t, p)
-            if best is None:
+            if best is not None:
+                t, target = best
+                candidates.append((t, idx, target))
+        candidates.sort(key=lambda c: (c[0], c[1]))
+
+        spent: set[int] = set()
+        for _, idx, target in candidates:
+            if not target.alive:
                 continue
-            _, target = best
+            b, _, _ = self._segments[idx]
             spent.add(idx)
             target.hp -= b.damage
             self.damage_dealt[b.squadron] += b.damage
@@ -270,7 +290,7 @@ class World:
         under fire, because taking damage resets the counter.
         """
         self.ticks_since_damage += 1
-        if self.ticks_since_damage < self.INACTIVITY_TICKS:
+        if self.ticks_since_damage < self.inactivity_ticks:
             return
         for pid in sorted(self.planes):
             p = self.planes[pid]
@@ -285,7 +305,7 @@ class World:
         return tuple(sorted({p.squadron for p in self.planes.values() if p.alive}))
 
     def round_over(self) -> bool:
-        return len(self._living_squadrons()) <= 1 or self.tick_no >= self.ROUND_TICK_LIMIT
+        return len(self._living_squadrons()) <= 1 or self.tick_no >= self.round_tick_limit
 
     def outcome(self) -> str:
         living = self._living_squadrons()
@@ -293,7 +313,7 @@ class World:
             return "draw"
         if len(living) == 1:
             return "drain" if self.won_by_drain else f"squadron_{living[0]}"
-        if self.tick_no >= self.ROUND_TICK_LIMIT:
+        if self.tick_no >= self.round_tick_limit:
             return "timeout"
         return "ongoing"
 

@@ -110,6 +110,30 @@ def test_the_inactivity_drain_starts_after_600_quiet_ticks():
     assert w.planes[min(w.planes)].hp < hp_before
 
 
+def test_round_tick_limit_is_a_constructor_parameter():
+    """round_over() and outcome() must read the instance value, not the class constant -- a
+    call site left reading `self.ROUND_TICK_LIMIT` would make this pass at the class default
+    (3000) and silently ignore the constructor argument."""
+    w = World(ARENA, [["fighter"], ["fighter"]], CLASSES, seed=7, round_tick_limit=5)
+    _park(w)
+    w.tick_no = 4
+    assert not w.round_over()
+    w.tick_no = 5
+    assert w.round_over()
+    assert w.outcome() == "timeout"
+
+
+def test_inactivity_ticks_is_a_constructor_parameter():
+    """_drain() must read the instance value, not the class constant -- a call site left
+    reading `self.INACTIVITY_TICKS` would need 600 quiet ticks regardless of this argument."""
+    w = World(ARENA, [["fighter"], ["fighter"]], CLASSES, seed=7, inactivity_ticks=5)
+    _park(w)
+    hp_before = w.planes[min(w.planes)].hp
+    for _ in range(6):
+        w.tick(_idle(w))
+    assert w.planes[min(w.planes)].hp < hp_before
+
+
 def test_any_damage_resets_the_inactivity_counter():
     w = _w()
     a, b = min(w.planes), max(w.planes)

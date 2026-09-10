@@ -33,10 +33,13 @@ def run_round(bot_paths: list[str | Path], squadrons: list[list[str]], seed: int
               arena: tuple[float, float], classes: dict[str, PlaneClass] | None = None,
               table_path: str | Path | None = None,
               replay_dir: str | Path | None = None, deadline: float = 0.05,
-              round_index: int = 1) -> RoundResult:
+              round_index: int = 1,
+              round_tick_limit: int = World.ROUND_TICK_LIMIT,
+              inactivity_ticks: int = World.INACTIVITY_TICKS) -> RoundResult:
     table_path = Path(table_path) if table_path is not None else None
     classes = classes or load_classes(table_path)
-    world = World(arena, squadrons, classes, seed=seed)
+    world = World(arena, squadrons, classes, seed=seed,
+                  round_tick_limit=round_tick_limit, inactivity_ticks=inactivity_ticks)
     bots = [BotProcess(p, tick_deadline=deadline) for p in bot_paths]
 
     thin = fat = None

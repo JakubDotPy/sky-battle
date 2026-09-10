@@ -147,9 +147,34 @@ class ActionRejected(NamedTuple):
 `unknown_plane`, `not_an_action`, `bad_fire`, `nan_or_inf`, `clamped`, or `unknown_gun:<index>`
 (the last one raised for a `fire` entry naming a gun index your plane does not have).
 
+## Game files
+
+A host's `[game]` table, with every field and its default. See [Running a game
+file](running-a-game.md#running-a-game-file) for how the whole thing behaves.
+
+| Field | Default | Meaning |
+|---|---|---|
+| `rounds` | `11` | Rounds in the match, each a fresh spawn with its own seed. |
+| `ticks_per_round` | `3000` | Tick limit per round — `duel` has no flag for this and is always `3000`. |
+| `planes_per_player` | `2` | The plane count every player's `SQUADRON` must declare. |
+| `arena` | `[2000, 2000]` | `[width, height]`, checked against every class's cone and bubble ranges. |
+| `seed` | `1` | Each round within the match uses `seed`, `seed + 1`, `seed + 2`, ... in order. |
+| `deadline` | `0.05` | Per-tick wall-clock budget, in seconds, handed to each bot. |
+
+`[[players]]`, one block per player — a file needs at least one:
+
+| Field | Meaning |
+|---|---|
+| `name` | The player's display name — required, and what the result line reports. |
+| `bot` | Path to the bot's `.py` file, resolved relative to the game file, not the working directory. |
+
+A player's squadron is not declared in the game file at all — it comes from the bot's own
+`SQUADRON` (see [Squadron composition](writing-a-bot.md#squadron-composition)), read statically
+and checked against `planes_per_player` and the class table before the match starts.
+
 ## CLI
 
 `sky-battle duel [bot_a] [bot_b] [--seed N] [--rounds N] [--arena W H] [--deadline SECONDS]
-[--replay-dir DIR] [--rules]` and `sky-battle serve REPLAY_DIR [--port N] [--no-open]` are the
-whole command surface today — see [Running a game](running-a-game.md) for what each flag does
-and how to read the output.
+[--replay-dir DIR] [--rules]`, `sky-battle play GAME_FILE [--replay-dir DIR]`, and `sky-battle
+serve REPLAY_DIR [--port N] [--no-open]` are the whole command surface today — see [Running a
+game](running-a-game.md) for what each flag does and how to read the output.

@@ -1,8 +1,8 @@
 # The game
 
 Sky Battle is a bot-programming game. You do not fly a plane — you write a Python program that
-flies one, or several. Two people's programs meet in an arena, and the engine runs the fight
-unattended: the score at the end says whose bot flew better.
+flies one, or several. Two or more people's programs meet in an arena, and the engine runs the
+fight unattended: the score at the end says whose bot flew best.
 
 Two things are strictly separate. **The engine** owns the whole simulation: positions,
 headings, speeds, bullets, collisions, damage, the tick loop, scoring, and the recording that

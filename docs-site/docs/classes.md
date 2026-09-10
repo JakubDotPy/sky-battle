@@ -11,7 +11,9 @@ tables, gun-by-gun, live on the [reference](reference.md) page — this page is 
 of each class, not the exhaustive numbers.
 
 A squadron is built from three classes, each with a distinct character rather than just a
-different stat line.
+different stat line. Which classes go into your squadron, and how many of each, is entirely your
+own call — see [Squadron composition](writing-a-bot.md#squadron-composition) for how a bot
+declares its mix.
 
 ## Scout
 

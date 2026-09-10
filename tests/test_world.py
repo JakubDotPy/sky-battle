@@ -82,6 +82,45 @@ def test_a_bullet_damages_an_enemy_and_credits_the_shooter():
     assert w.damage_dealt[0] > 0.0
 
 
+def test_a_kill_is_credited_to_the_round_that_struck_first_not_the_one_fired_first():
+    """G1: with only two squadrons the mis-credit cancels (both rounds are the same squadron's),
+    so this needs a THIRD squadron to make it visible.
+
+    Squadron 0's plane fires first in `_fire`'s spawn order (its bullet is segment index 0) but
+    sits far from the victim, so its round arrives LATE within the tick. Squadron 1's plane
+    fires second (segment index 1) but sits close, so its round arrives FIRST. Whichever
+    squadron's round actually struck first must get the kill -- squadron 1 -- not squadron 0,
+    which merely happened to be processed first.
+    """
+    w = World(ARENA, [["fighter"], ["fighter"], ["fighter"]], CLASSES, seed=7)
+    far, near, victim = sorted(w.planes)  # spawn order: squadron 0, 1, 2 respectively
+    assert w.planes[far].squadron == 0 and w.planes[near].squadron == 1
+    assert w.planes[victim].squadron == 2
+
+    # An L-shaped approach -- far attacks from the south, near from the west -- so neither
+    # round's straight-line path crosses the OTHER shooter's plane; both converge on the victim.
+    w.planes[victim].hp = 1
+    w.planes[victim].x, w.planes[victim].y, w.planes[victim].heading_deg = 500.0, 500.0, 270.0
+    w.planes[far].x, w.planes[far].y, w.planes[far].heading_deg = 500.0, 466.0, 90.0    # gap 34
+    w.planes[near].x, w.planes[near].y, w.planes[near].heading_deg = 480.0, 500.0, 0.0  # gap 20
+
+    w.tick({0: {far: Action(fire=frozenset({0}))},
+            1: {near: Action(fire=frozenset({0}))},
+            2: {}})
+
+    assert not w.planes[victim].alive
+    assert w.kills[1] == [victim], "the round that struck first (squadron 1) must get the kill"
+    assert w.kills[0] == []
+    assert w.kills_while_alive[1] == 1
+    assert w.kills_while_alive[0] == 0
+    assert w._damage_ledger.get((1, victim), 0.0) > 0.0
+    assert (0, victim) not in w._damage_ledger, (
+        "squadron 0's round arrived after the victim was already dead; it must not also hit"
+    )
+    # squadron 0's round found its target already dead and was therefore never consumed.
+    assert len(w.bullets) == 1 and w.bullets[0].squadron == 0
+
+
 def test_own_bullets_never_damage_the_shooters_own_squadron():
     w = World(ARENA, [["fighter", "fighter"], ["fighter"]], CLASSES, seed=7)
     mates = sorted(p.id for p in w.planes.values() if p.squadron == 0)

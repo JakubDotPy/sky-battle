@@ -56,6 +56,46 @@ message lands harmlessly on stderr and never reaches the engine. You cannot corr
 printing, and you do not need a `flush=True` discipline or an `fd=3` convention to get this —
 it works out of the box.
 
+## Squadron composition
+
+Every bot declares its own squadron as a module-level literal, right alongside `Bot`:
+
+```python
+SQUADRON = ["scout", "fighter"]
+```
+
+This is as much a part of the contract as `act()` itself — a bot that skips it cannot join a
+[hosted game](running-a-game.md#running-a-game-file) at all; `duel` is more forgiving and falls
+back to a fixed `["scout", "fighter"]` only when the declaration is missing entirely.
+
+The engine reads `SQUADRON` **statically, with `ast`** — it never imports your bot to find out
+what it flies. That is not a style choice: your bot runs as an isolated subprocess, and never
+importing player code into the engine's own process is what makes the per-tick deadline
+enforceable at all. A useful side effect follows from the same fact: a host can inspect every
+submission's chosen composition just by reading the file, without running anything.
+
+Which also means the declaration has to be **a literal list of string kinds** — not a computed
+list, a loop, or a call to a function that returns one:
+
+```python
+SQUADRON = ["bomber", "bomber"]      # fine -- a literal list of string constants
+SQUADRON = ["scout"] * 2             # rejected: not a list of string literals
+```
+
+Every kind named has to exist in the class table — `bomber`, `fighter` or `scout` today, see
+[Plane classes](classes.md) — and under `sky-battle play` its length has to match the host's
+`planes_per_player` exactly. `duel` enforces only the kind check: two bots meeting head-on may
+field squadrons of different sizes, since there is no shared `planes_per_player` to check them
+against.
+
+Composition is entirely yours to choose — any mix of classes, in any order. One honest caveat:
+a group that optimises hard enough will tend to converge on whichever mix is simply strongest,
+since balance has not been tuned for free choice yet.
+
+None of the bots in `samples/` declare `SQUADRON` — they were all written back when `duel`'s
+fallback was the only squadron there was, which is exactly why the sample ladder above never
+needed one. Add a line before pointing a game file at any of them.
+
 ## Conventions that bite
 
 | Convention | Rule |
