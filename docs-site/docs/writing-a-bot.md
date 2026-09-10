@@ -285,6 +285,40 @@ this is the whole tactical core of the flight model: hauling the nose around to 
 target costs you the speed to disengage afterwards, and sitting at corner speed all the time is
 a genuine trade-off, not a free optimum.
 
+## A complete bot
+
+Everything above, in one file you can run. This is `samples/leader.py`, included verbatim from
+the repository — it is a real player that ships with the engine, is exercised by the test suite,
+and is the reference opponent the other samples are measured against.
+
+```python title="samples/leader.py"
+--8<-- "samples/leader.py"
+```
+
+Save it as `mybot.py` and fly it against the simplest sample:
+
+```console
+uv run sky-battle duel mybot.py samples/sitting_duck.py
+```
+
+The parts worth tracing, in the order they matter:
+
+1. **`SQUADRON`** declares the two planes it wants. The engine reads this statically, without
+   importing your file, and rejects it before the match if it disagrees with the host's game file.
+1. **`if not p.contacts`** is the search branch. A bot with nothing in sight must *cover ground* —
+   the gentle `steer=0.06` is deliberate, because a hard turn re-scans one patch of sky forever.
+1. **The two-iteration loop** is the whole point. Bullet flight time depends on range, range
+   depends on where the target will be, and that depends on flight time — so it converges on the
+   intercept point instead of solving it in closed form. Two passes land well inside a plane's
+   radius.
+1. **`gun.muzzle_speed` and `gun.cooldown_ticks_left == 0 and gun.ammo > 0`** come from the live
+   gun table, never from a constant the bot assumes. A balance change moves the aim automatically.
+1. **`throttle=0.4 if abs(lead_bearing) > 30.0`** trades speed for turn rate, because
+   [turn rate peaks at corner speed](classes.md#turn-rate-peaks-at-corner-speed-not-at-the-minimum).
+
+What it deliberately does *not* do: read `state.events`, remember a lost contact, or divide roles
+between its two planes. Those are the next rung up.
+
 ## Sample ladder
 
 Work through `samples/` in order — each one is short and teaches exactly one idea, building on

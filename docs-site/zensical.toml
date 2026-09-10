@@ -37,6 +37,7 @@ md_in_html = {}
 footnotes = {}
 pymdownx.details = {}
 pymdownx.superfences = {}
+pymdownx.snippets = { base_path = [".."], check_paths = true }
 pymdownx.inlinehilite = {}
 pymdownx.highlight = { anchor_linenums = true, line_spans = "__span", pygments_lang_class = true }
 
