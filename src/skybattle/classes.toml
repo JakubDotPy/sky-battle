@@ -1,0 +1,108 @@
+# Sky Battle balance table.
+# Speeds are units/tick, angles degrees, times ticks. Edit freely: this file is the game.
+# Every replay records this file's hash, so results are only comparable across identical tables.
+#
+# Guns are FIXED mounts, never aimed: a round leaves along bearing_deg, and dispersion_deg is
+# the gun's precision -- a random scatter applied per bullet, not a traverse. muzzle_speed is
+# the round's own speed before the shooter's velocity is added as a VECTOR (not simply summed
+# along the firing direction, which would make a rear gun's rounds speed up as the shooter
+# accelerates rather than slow down). lifetime_ticks is how long a round flies before it
+# expires; since a round inherits the shooter's velocity, a faster plane's rounds cover more
+# ground in that time, so speed buys reach as well as a shorter time-to-target. dispersion_deg,
+# muzzle_speed and lifetime_ticks below are placeholders for a later balance pass.
+
+[scout]
+hp = 70
+radius = 9.0
+stall_speed = 3.0
+corner_speed = 5.0
+max_speed = 9.0
+# Turn rate peaks at corner speed. A monotonically falling curve makes flying at stall
+# speed and pirouetting the dominant strategy.
+turn_at_stall = 5.0
+turn_at_corner = 9.0
+turn_at_max = 4.5
+accel = 0.20
+decel = 0.30
+# Degrees turned per tick is multiplied by this to get speed lost. Energy management.
+turn_bleed = 0.045
+cone_deg = 120.0
+cone_range = 900.0
+rear_cone_deg = 0.0
+rear_cone_range = 0.0
+
+  [[scout.guns]]
+  name = "forward"
+  bearing_deg = 0.0
+  dispersion_deg = 2.5
+  cooldown_ticks = 6
+  damage = 8
+  ammo = 80
+  lifetime_ticks = 20
+  muzzle_speed = 34.0
+
+[fighter]
+hp = 100
+radius = 12.0
+stall_speed = 2.0
+corner_speed = 4.5
+max_speed = 8.0
+turn_at_stall = 5.5
+turn_at_corner = 10.0
+turn_at_max = 4.0
+accel = 0.22
+decel = 0.30
+turn_bleed = 0.040
+cone_deg = 70.0
+cone_range = 600.0
+rear_cone_deg = 0.0
+rear_cone_range = 0.0
+
+  [[fighter.guns]]
+  name = "forward"
+  bearing_deg = 0.0
+  dispersion_deg = 2.0
+  cooldown_ticks = 8
+  damage = 10
+  ammo = 120
+  lifetime_ticks = 18
+  muzzle_speed = 30.0
+
+[bomber]
+hp = 160
+radius = 18.0
+stall_speed = 2.0
+corner_speed = 3.0
+max_speed = 5.0
+turn_at_stall = 3.5
+turn_at_corner = 6.0
+turn_at_max = 3.0
+accel = 0.12
+decel = 0.20
+turn_bleed = 0.055
+cone_deg = 50.0
+cone_range = 450.0
+rear_cone_deg = 50.0
+rear_cone_range = 350.0
+
+  [[bomber.guns]]
+  name = "forward"
+  bearing_deg = 0.0
+  dispersion_deg = 3.0
+  cooldown_ticks = 14
+  damage = 14
+  ammo = 90
+  lifetime_ticks = 15
+  muzzle_speed = 26.0
+
+  # Fixed, fires straight astern -- no traverse, no aiming. Its value is that it can shoot at a
+  # pursuer at all, not that it tracks one: it is also the least precise mount on any class.
+  [[bomber.guns]]
+  name = "rear"
+  bearing_deg = 180.0
+  dispersion_deg = 6.0
+  cooldown_ticks = 10
+  damage = 10
+  ammo = 60
+  lifetime_ticks = 11
+  muzzle_speed = 28.0
