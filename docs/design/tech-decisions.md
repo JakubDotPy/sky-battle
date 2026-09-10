@@ -413,6 +413,14 @@ Figures replaced by measurements taken while implementing, rather than from the 
 - **Each squadron's bot RNG is one long-lived stream, not a fresh `Random` per tick.** The original
   rebuilt it every tick from the same seed, so `state.rng.random()` returned an identical value
   every tick — a constant wearing a stream's clothes.
+- **Events cross the wire as their named types; they used to arrive as bare tuples.** The encoder
+  always sent `[type_name, fields]`, and the decoder threw the name away "to keep the format
+  simple" — saving one line there and charging it back out as a documented trap, a shape-matching
+  `match` block in every bot, and arity as the public contract. Worse, it was a divergence between
+  the two paths: `World.views()` hands an in-process bot real types, so a bot's harness tests
+  passed on `isinstance` while the same code misread a live match. Rebuilding the class costs a
+  five-entry dict and one lookup, with an unknown name degrading to a tuple. No wire-format change
+  was needed, which is the tell that the saving was never real.
 - **A claim withdrawn rather than corrected.** The design doc asserted that finite ammo was "the
   second clock" and made "aimed fire strictly better than spray". That was inferred from research,
   not designed: ammo is finite and each gun has a magazine, and a magazine that does not run dry

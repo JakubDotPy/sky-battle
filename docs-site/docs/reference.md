@@ -109,15 +109,14 @@ class View(NamedTuple):
     tick: int
     arena: tuple[float, float]
     planes: tuple[OwnPlane, ...]
-    events: tuple[object, ...]
+    events: tuple[object, ...]   # one of the five event types below
     rng: random.Random | None = None
 ```
 
 ### Events
 
-Typed like this in `skybattle.state`, but see the
-[warning in Writing a bot](writing-a-bot.md#events) — a real match delivers these over the wire
-as plain positional tuples, with the type name stripped:
+Typed like this in `skybattle.state`, and delivered as these types over the wire too, so
+[matching on the class](writing-a-bot.md#events) works in a real match and not only in a test:
 
 ```python
 class HitByBullet(NamedTuple):

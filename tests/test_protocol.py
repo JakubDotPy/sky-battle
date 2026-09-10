@@ -3,7 +3,18 @@ import json
 import pytest
 
 from skybattle import protocol
-from skybattle.state import Action, Contact, Gun, OwnPlane, View
+from skybattle.state import (
+    Action,
+    ActionRejected,
+    BulletHit,
+    Contact,
+    ContactLost,
+    Gun,
+    HitByBullet,
+    OwnPlane,
+    PlaneDestroyed,
+    View,
+)
 
 
 def _view():
@@ -28,6 +39,41 @@ def test_view_survives_a_json_round_trip_as_typed_objects():
     assert back.planes[0].contacts[0].seen_by == (0, 1)
     assert back.planes[0].guns[0].cooldown_ticks_left == 2
     assert back.planes[0].bubble_range == 120.0
+
+
+def test_events_survive_the_wire_as_their_named_types():
+    """The in-process path hands a bot real event types, so the wire path must too.
+
+    A bot's own unit tests go through the harness, which never crosses the wire. An untyped
+    wire path is therefore the worst shape of bug: green in the test, misread in the match.
+
+    Note the `type(...) is type(...)` assertion carries this test on its own. A `NamedTuple`
+    compares equal to a plain tuple of the same values, so `back.events == events` passes
+    even when every type name has been stripped -- which is exactly how the untyped decode
+    went unnoticed.
+    """
+    events = (
+        HitByBullet(plane_id=0, from_squadron=1, damage=5),
+        BulletHit(plane_id=0, gun=1, target_id=3, damage=5),
+        PlaneDestroyed(plane_id=2, by=None),
+        ContactLost(contact_id=4),
+        ActionRejected(plane_id=0, reason="gun index 9 out of range"),
+    )
+    wire = json.loads(json.dumps(protocol.encode_view(_view()._replace(events=events), rng_seed=5)))
+    back = protocol.decode_view(wire)
+    assert back.events == events
+    assert all(type(b) is type(e) for b, e in zip(back.events, events, strict=True))
+    assert isinstance(back.events[0], HitByBullet)
+    assert back.events[0].from_squadron == 1
+    assert back.events[2].by is None
+    assert back.events[4].reason == "gun index 9 out of range"
+
+
+def test_an_unknown_event_name_degrades_to_a_tuple_rather_than_raising():
+    """A bot outliving an event type gets what it used to get, not an exception mid-match."""
+    wire = protocol.encode_view(_view(), rng_seed=5)
+    wire["events"] = [["SomethingFromALaterEngine", [1, 2]]]
+    assert protocol.decode_view(wire).events == ((1, 2),)
 
 
 def test_the_rng_arrives_as_a_seeded_random_not_a_seed():

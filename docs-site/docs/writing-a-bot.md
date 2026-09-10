@@ -239,37 +239,36 @@ ticks so a squadron does not chase a decades-old ghost.
 ### Events
 
 `state.events` describes what happened on the *previous* tick — hits landed, hits taken, planes
-destroyed, contacts lost, your own actions rejected. In `skybattle.state` these are typed
-`NamedTuple`s: `HitByBullet(plane_id, from_squadron, damage)`,
-`BulletHit(plane_id, gun, target_id, damage)`, `PlaneDestroyed(plane_id, by)`,
-`ContactLost(contact_id)`, `ActionRejected(plane_id, reason)`.
+destroyed, contacts lost, your own actions rejected. They arrive as the typed `NamedTuple`s from
+`skybattle.state`, in a real match exactly as in a harness test:
+`HitByBullet(plane_id, from_squadron, damage)`, `BulletHit(plane_id, gun, target_id, damage)`,
+`PlaneDestroyed(plane_id, by)`, `ContactLost(contact_id)`, `ActionRejected(plane_id, reason)`.
 
-!!! warning "In a real match, events arrive as plain tuples — not those types"
-    The wire protocol between the engine and your subprocess deliberately drops the type name
-    to keep the format simple, so **in an actual match** `state.events` holds bare tuples, not
-    `HitByBullet` or `PlaneDestroyed` instances. `isinstance(e, HitByBullet)` will never be
-    `True` there, even though it happily is in a harness-based unit test, where your `act` is
-    called directly and never crosses the wire. Verified against a live subprocess: a tick with
-    a `HitByBullet(plane_id=0, from_squadron=1, damage=5)` event arrives as the plain tuple
-    `(0, 1, 5)`.
-
-Decode by shape instead, since the five event types have distinguishable lengths (and, for the
-two 2-tuples, distinguishable second-field types):
+Import them and match on the class:
 
 ```python
+from skybattle.state import ActionRejected, BulletHit, ContactLost, HitByBullet, PlaneDestroyed
+
 for e in state.events:
     match e:
-        case (contact_id,):
-            ...  # ContactLost
-        case (plane_id, from_squadron, damage):
-            ...  # HitByBullet
-        case (plane_id, gun, target_id, damage):
-            ...  # BulletHit
-        case (plane_id, str() as reason):
-            ...  # ActionRejected
-        case (plane_id, by):
-            ...  # PlaneDestroyed (by is an int, or None if it was the inactivity drain)
+        case HitByBullet(from_squadron=shooter, damage=damage):
+            ...  # somebody from squadron `shooter` has guns on me
+        case BulletHit(gun=gun, target_id=target):
+            ...  # my gun `gun` connected with contact `target`
+        case PlaneDestroyed(plane_id=pid, by=None):
+            ...  # the inactivity drain got it; nobody shot it down
+        case PlaneDestroyed(plane_id=pid, by=killer):
+            ...
+        case ContactLost(contact_id=cid):
+            ...  # fell off the squadron's radar (see Contacts and memory, above)
+        case ActionRejected(plane_id=pid, reason=reason):
+            ...  # one of my own commands was refused, see below
 ```
+
+Reading fields by name works just as well (`e.damage`, `e.contact_id`), and so does `isinstance`.
+An event type your bot does not recognise — from an engine newer than the one you wrote against —
+arrives as a plain positional tuple rather than raising, so it simply fails to match any `case`
+you wrote and falls through to your default.
 
 `ActionRejected` is also how you learn about your own bugs at runtime — a bad plane id, an
 out-of-range gun index, a `NaN` you accidentally computed — so it is worth logging rather than

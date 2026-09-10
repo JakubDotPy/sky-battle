@@ -7,7 +7,18 @@ and it costs a dependency plus opacity: a student can read JSON.
 
 import random
 
-from .state import Action, Contact, Gun, OwnPlane, View
+from .state import (
+    Action,
+    ActionRejected,
+    BulletHit,
+    Contact,
+    ContactLost,
+    Gun,
+    HitByBullet,
+    OwnPlane,
+    PlaneDestroyed,
+    View,
+)
 
 # ponytail: the wire format is positional, so OwnPlane's field LAYOUT is load-bearing here.
 # Deriving the scalar count keeps an appended scalar BEFORE the tuple fields working, and
@@ -20,6 +31,24 @@ if OwnPlane._fields[_SCALARS:] != ("guns", "contacts", "bubble_range"):
     raise RuntimeError(
         f"OwnPlane layout changed to {OwnPlane._fields!r}; update encode_view/decode_view"
     )
+
+# The wire already carries `[type_name, fields]`, so handing a bot the named type costs one
+# lookup. It has to: the in-process path (`World.views()`) delivers real event types, so an
+# untyped wire path would be a divergence that passes a harness test and misreads a live match.
+_EVENT_TYPES = {
+    cls.__name__: cls
+    for cls in (HitByBullet, BulletHit, PlaneDestroyed, ContactLost, ActionRejected)
+}
+
+
+def _decode_event(name: str, body: list) -> object:
+    """A name the engine no longer sends degrades to a plain tuple rather than raising.
+
+    `API_VERSION` already refuses a genuine engine/bot mismatch, so this only covers the case
+    of an event type that outlived its name -- and a tuple is what a bot used to get anyway.
+    """
+    cls = _EVENT_TYPES.get(name)
+    return cls(*body) if cls is not None else tuple(body)
 
 
 def encode_view(view: View, rng_seed: int | str) -> dict:
@@ -71,10 +100,7 @@ def decode_view(payload: dict) -> View:
         tick=int(payload["tick"]),
         arena=(float(payload["arena"][0]), float(payload["arena"][1])),
         planes=tuple(planes),
-        # Deliberately lossy: events arrive as plain tuples, not their named types.
-        # Reconstructing the class would need a registry kept in sync across a version
-        # boundary. The [type_name, fields] shape on the wire keeps what that would need.
-        events=tuple(tuple(body) for _, body in payload["events"]),
+        events=tuple(_decode_event(name, body) for name, body in payload["events"]),
         rng=random.Random(payload["rng_seed"]),
     )
 

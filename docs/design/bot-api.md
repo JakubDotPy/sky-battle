@@ -202,6 +202,10 @@ as pseudocode in the docs.
 No priority queue, no ordering semantics to document, no reentrancy. And `ActionRejected` arriving in the same
 stream is how a bot learns about its own bugs at runtime.
 
+The named types survive the wire: `protocol.py` sends `[type_name, fields]` and rebuilds the class on receipt, so a
+bot writes `case HitByBullet(damage=d)` rather than counting tuple positions. An unrecognised name degrades to a
+plain tuple instead of raising.
+
 ## 5. Failure is legible, and the match never aborts
 
 The author's decision: **on a timeout no command is sent and the plane continues without change** — the engine
