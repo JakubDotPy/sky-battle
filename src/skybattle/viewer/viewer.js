@@ -16,12 +16,21 @@
 const TICK_HZ = 30; // matches the engine's fixed dt = 1/30 (tech-decisions.md sec 8)
 const MARGIN_PX = 28;
 const GRID_STEP = 200; // arena units between grid lines
-const KIND_RADIUS = { scout: 7, fighter: 9, bomber: 14 };
-const DEFAULT_RADIUS = 8;
+// Track symbology, the HSD idiom: SHAPE says class, COLOUR says squadron, and a
+// separate velocity vector says heading. Moving heading onto its own stick is what
+// buys the shape channel -- and a 1px stick reads heading more precisely at this
+// scale than the rotation of a 7px triangle ever did.
+const KIND_SYMBOL = { scout: "circle", fighter: "chevron", bomber: "square" };
+const KIND_RADIUS = { scout: 6, fighter: 7.5, bomber: 10 }; // symbol half-extent AND click radius, px
+const DEFAULT_RADIUS = 7;
+const VECTOR_BASE_PX = 5; // stick length at a standstill
+const VECTOR_PER_SPEED = 1.15; // px per unit of speed: the vector's LENGTH encodes speed, as a real one does
+const SILHOUETTE_SCALE = 1.75; // the selected plane is promoted to a planform this much larger
+const BRACKET_PAD = 7; // gap between the selected plane and its target brackets
 const BULLET_RADIUS = 2;
 const DEAD_ALPHA = 0.35;
 const FOG_ALPHA = 0.3; // enemy plane absent from the selected squadron's visible[] this tick
-const SELECT_HIT_PAD = 5; // extra px of click slop beyond a plane's drawn radius
+const SELECT_HIT_PAD = 6; // extra px of click slop beyond a plane's drawn radius
 const CONE_FILL_ALPHA = 0.12;
 const CONE_EDGE_ALPHA = 0.5;
 const BUBBLE_EDGE_ALPHA = 0.22; // subordinate to the cone -- context, not the subject
@@ -360,11 +369,18 @@ function drawTrail(plane) {
 
 // `selected` and `visible` are only passed when a plane is selected; both
 // are null/undefined otherwise, which reads as "no dimming, no highlight".
+//
+// Track symbology: a screen-aligned symbol for class, a velocity vector for
+// heading and speed, squadron colour for identity, and fill for whether the
+// selected squadron can actually see it. The selected plane is promoted from a
+// symbol to an aircraft planform -- which is exactly what a real display does
+// for ownship among a field of tracks.
 function drawPlane(plane, selected, visible) {
   const size = KIND_RADIUS[plane.kind] ?? DEFAULT_RADIUS;
   const cx = px(plane.x);
   const cy = py(plane.y);
-  const headingRad = (plane.heading_deg * Math.PI) / 180;
+  const color = squadronColor(plane.squadron);
+  const isSelected = selected != null && plane.id === selected.id;
 
   // Fog of war is about ENEMY knowledge: an enemy plane absent from the
   // selected squadron's recorded visible[] list this tick is dimmed.
@@ -376,39 +392,123 @@ function drawPlane(plane, selected, visible) {
   }
 
   ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(-headingRad); // canvas y is flipped relative to game y, so rotation sign flips too
-  ctx.beginPath();
-  ctx.moveTo(size, 0);
-  ctx.lineTo(-size * 0.6, size * 0.55);
-  ctx.lineTo(-size * 0.6, -size * 0.55);
-  ctx.closePath();
+  ctx.globalAlpha = plane.alive ? (dim ? FOG_ALPHA : 1) : DEAD_ALPHA;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.25;
 
-  const color = squadronColor(plane.squadron);
-  if (plane.alive && !dim) {
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 0.75;
-    ctx.stroke();
+  if (!plane.alive) {
+    drawWreck(cx, cy, size); // no vector: a wreck is not going anywhere
   } else {
-    ctx.globalAlpha = plane.alive ? FOG_ALPHA : DEAD_ALPHA;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+    drawVelocityVector(cx, cy, plane, dim);
+    if (isSelected) drawSilhouette(cx, cy, plane, size * SILHOUETTE_SCALE);
+    else drawTrackSymbol(cx, cy, plane, size, dim);
   }
   ctx.restore();
 
-  if (selected && plane.id === selected.id) {
+  if (isSelected) drawTargetBrackets(cx, cy, size * SILHOUETTE_SCALE + BRACKET_PAD);
+}
+
+// Length encodes speed, direction encodes heading -- both facts the stream
+// already carries, and the reason the symbols themselves need no rotation.
+function drawVelocityVector(cx, cy, plane, dim) {
+  const len = VECTOR_BASE_PX + plane.speed * VECTOR_PER_SPEED;
+  const rad = (plane.heading_deg * Math.PI) / 180;
+  ctx.save();
+  ctx.lineWidth = 1;
+  if (dim) ctx.setLineDash([2, 2]); // an unseen track is a dead-reckoned guess
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(rad) * len, cy - Math.sin(rad) * len); // -sin: canvas y is flipped
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Filled when the selected squadron can see it, hollow when it cannot. The
+// chevron is the one symbol that turns with the aircraft; a circle and a square
+// gain nothing from rotating, and staying screen-aligned keeps them readable.
+function drawTrackSymbol(cx, cy, plane, size, hollow) {
+  const shape = KIND_SYMBOL[plane.kind] ?? "square";
+  ctx.beginPath();
+  if (shape === "circle") {
+    ctx.arc(cx, cy, size * 0.72, 0, Math.PI * 2);
+  } else if (shape === "chevron") {
+    const rad = (plane.heading_deg * Math.PI) / 180;
     ctx.save();
-    ctx.strokeStyle = ACCENT_COLOR;
-    ctx.lineWidth = 1.25;
-    ctx.beginPath();
-    ctx.arc(cx, cy, size + 4, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.translate(cx, cy);
+    ctx.rotate(-rad);
+    ctx.moveTo(size * 0.85, 0);
+    ctx.lineTo(-size * 0.5, size * 0.8);
+    ctx.lineTo(-size * 0.5, -size * 0.8);
+    ctx.closePath();
+    hollow ? ctx.stroke() : ctx.fill();
     ctx.restore();
+    return;
+  } else {
+    const h = size * 0.66;
+    ctx.rect(cx - h, cy - h, h * 2, h * 2);
   }
+  hollow ? ctx.stroke() : ctx.fill();
+}
+
+// The selected plane, drawn as a planform: nose, swept wings, tailplane. Points
+// are fractions of `s` for the upper half and mirrored for the lower, so the
+// silhouette stays symmetric by construction rather than by careful typing.
+const SILHOUETTE = [
+  [1.15, 0.0],
+  [0.34, 0.13],
+  [-0.08, 0.82],
+  [-0.4, 0.82],
+  [-0.28, 0.15],
+  [-0.82, 0.15],
+  [-0.78, 0.46],
+  [-0.98, 0.46],
+  [-1.08, 0.0],
+];
+
+function drawSilhouette(cx, cy, plane, s) {
+  const rad = (plane.heading_deg * Math.PI) / 180;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-rad);
+  ctx.beginPath();
+  ctx.moveTo(SILHOUETTE[0][0] * s, 0);
+  for (const [x, y] of SILHOUETTE) ctx.lineTo(x * s, y * s);
+  for (let i = SILHOUETTE.length - 2; i >= 1; i--) {
+    ctx.lineTo(SILHOUETTE[i][0] * s, -SILHOUETTE[i][1] * s);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// Target designator: four corner brackets, the display's own selection idiom.
+function drawTargetBrackets(cx, cy, r) {
+  const arm = r * 0.42;
+  ctx.save();
+  ctx.strokeStyle = ACCENT_COLOR;
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 1.25;
+  ctx.beginPath();
+  for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const x = cx + sx * r;
+    const y = cy + sy * r;
+    ctx.moveTo(x - sx * arm, y);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x, y - sy * arm);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawWreck(cx, cy, size) {
+  const a = size * 0.7;
+  ctx.beginPath();
+  ctx.moveTo(cx - a, cy - a);
+  ctx.lineTo(cx + a, cy + a);
+  ctx.moveTo(cx + a, cy - a);
+  ctx.lineTo(cx - a, cy + a);
+  ctx.stroke();
 }
 
 function squadronColor(squadron) {
