@@ -19,15 +19,16 @@ decimal string and back collapses any such disagreement to an identical double e
 while leaving ~1e-12 of accuracy -- far more than this game needs.
 """
 
-_SIN = tuple(round(math.sin(2.0 * math.pi * i / TRIG_STEPS), _TABLE_DP) for i in range(TRIG_STEPS))
-_COS = tuple(round(math.cos(2.0 * math.pi * i / TRIG_STEPS), _TABLE_DP) for i in range(TRIG_STEPS))
+_sin = [round(math.sin(2.0 * math.pi * i / TRIG_STEPS), _TABLE_DP) for i in range(TRIG_STEPS)]
+_cos = [round(math.cos(2.0 * math.pi * i / TRIG_STEPS), _TABLE_DP) for i in range(TRIG_STEPS)]
 
 # Exact values at the quarter turns; the table is off by ~1e-17 there and those four
 # headings appear constantly (spawn orientations, rear guns), so pin them.
 for _i, _s, _c in ((0, 0.0, 1.0), (TRIG_STEPS // 4, 1.0, 0.0),
                    (TRIG_STEPS // 2, 0.0, -1.0), (3 * TRIG_STEPS // 4, -1.0, 0.0)):
-    _SIN = _SIN[:_i] + (_s,) + _SIN[_i + 1:]
-    _COS = _COS[:_i] + (_c,) + _COS[_i + 1:]
+    _sin[_i], _cos[_i] = _s, _c
+
+_SIN, _COS = tuple(_sin), tuple(_cos)
 
 
 def _index(deg: float) -> int:

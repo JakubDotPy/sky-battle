@@ -20,7 +20,7 @@ from .state import (
     View,
 )
 
-# ponytail: the wire format is positional, so OwnPlane's field LAYOUT is load-bearing here.
+# The wire format is positional, so OwnPlane's field LAYOUT is load-bearing here.
 # Deriving the scalar count keeps an appended scalar BEFORE the tuple fields working, and
 # checking the tail means a new field fails at import instead of silently vanishing from every
 # bot's view. `bubble_range` is a scalar appended AFTER the tuple fields (state.py appends

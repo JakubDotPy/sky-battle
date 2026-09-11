@@ -335,16 +335,13 @@ class World:
             score = self.damage_dealt[sq]
             score += 50.0 * self.kills_while_alive[sq]
             for victim in self.kills[sq]:
-                score += 0.2 * self._damage_to(sq, victim)
+                score += 0.2 * self._damage_ledger.get((sq, victim), 0.0)
             if sq == last_standing:
                 enemy_dead = sum(1 for p in self.planes.values()
                                   if not p.alive and p.squadron != sq)
                 score += 10.0 * enemy_dead
             out[sq] = score
         return out
-
-    def _damage_to(self, squadron: int, victim_id: int) -> float:
-        return self._damage_ledger.get((squadron, victim_id), 0.0)
 
     # ---------------------------------------------------------------- views
 

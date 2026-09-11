@@ -15,13 +15,21 @@ import gzip
 import hashlib
 import json
 import platform
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
-from . import vision
+from . import protocol, vision
 from .classes import table_hash
 from .state import API_VERSION, Action
 
-ENGINE_VERSION = "0.1.0"
+try:
+    ENGINE_VERSION = version("skybattle")
+except PackageNotFoundError:      # a source checkout on PYTHONPATH, never installed
+    ENGINE_VERSION = "unknown"
+"""Read from package metadata rather than retyped here, so `uv version --bump` stays the single
+source and a replay header can never claim a version the package does not have. The fallback is
+deliberately not a version number: an uninstalled checkout cannot know one, and saying so beats
+stamping a stale guess into a header whose whole job is saying what produced the replay."""
 
 
 def make_header(seed: int, arena: tuple[float, float], squadrons: list[list[str]],
@@ -73,8 +81,9 @@ class ThinWriter(_Writer):
                statuses: dict[int, str]) -> None:
         self._fh.write(json.dumps({
             "tick": tick,
-            "actions": {str(pid): [a.throttle, a.steer, sorted(a.fire)]
-                        for pid, a in sorted(actions.items())},
+            # The engine/bot wire format, not a second hand-written copy of it: the thin
+            # stream is canonical, so a format change must not be able to miss it.
+            "actions": protocol.encode_actions(dict(sorted(actions.items()))),
             "statuses": {str(sq): s for sq, s in sorted(statuses.items())},
         }) + "\n")
 

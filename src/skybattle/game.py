@@ -37,6 +37,25 @@ class Game:
     players: list[Player]
 
 
+def _module_assign(bot_path: Path, name: str) -> ast.expr | None:
+    """The value node of a module-level `name = ...` in a bot file, None if it declares none.
+
+    Module level only -- a nested assignment to the same name must not count -- and the FIRST
+    such assignment wins, so a malformed declaration is never rescued by a later good one.
+    Each caller validates the node it gets back; only the read, the parse and the scan are
+    shared.
+    """
+    try:
+        tree = ast.parse(bot_path.read_text(), filename=str(bot_path))
+    except (OSError, SyntaxError) as exc:
+        raise ValueError(f"{bot_path}: cannot read bot file: {exc}") from exc
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+                isinstance(t, ast.Name) and t.id == name for t in node.targets):
+            return node.value
+    return None
+
+
 def read_squadron(bot_path: Path) -> list[str] | None:
     """Read a bot's `SQUADRON = [...]` declaration without importing it.
 
@@ -44,27 +63,15 @@ def read_squadron(bot_path: Path) -> list[str] | None:
     legitimate outcome for a caller that wants to fall back to a default (`duel`); a
     declaration that IS present but malformed is always an error, never silently ignored.
     """
-    try:
-        source = bot_path.read_text()
-    except OSError as exc:
-        raise ValueError(f"{bot_path}: cannot read bot file: {exc}") from exc
-    try:
-        tree = ast.parse(source, filename=str(bot_path))
-    except SyntaxError as exc:
-        raise ValueError(f"{bot_path}: cannot parse: {exc}") from exc
-
-    for node in tree.body:  # module level only -- a nested SQUADRON must not count
-        if not (isinstance(node, ast.Assign)
-                and any(isinstance(t, ast.Name) and t.id == "SQUADRON" for t in node.targets)):
-            continue
-        value = node.value
-        if (isinstance(value, ast.List)
-                and all(isinstance(e, ast.Constant) and isinstance(e.value, str)
-                        for e in value.elts)):
-            return [e.value for e in value.elts]
-        raise ValueError(f"{bot_path}: SQUADRON must be a list of string literals, "
-                         f"e.g. SQUADRON = [\"scout\", \"fighter\"]")
-    return None
+    value = _module_assign(bot_path, "SQUADRON")
+    if value is None:
+        return None
+    if (isinstance(value, ast.List)
+            and all(isinstance(e, ast.Constant) and isinstance(e.value, str)
+                    for e in value.elts)):
+        return [e.value for e in value.elts]
+    raise ValueError(f"{bot_path}: SQUADRON must be a list of string literals, "
+                     f"e.g. SQUADRON = [\"scout\", \"fighter\"]")
 
 
 def read_api_version(bot_path: Path) -> int | None:
@@ -75,22 +82,14 @@ def read_api_version(bot_path: Path) -> int | None:
     checked, and Battlesnake's precedent is that a bot declares its version and old ones keep
     working until a published cut-off.
     """
-    try:
-        tree = ast.parse(bot_path.read_text(), filename=str(bot_path))
-    except (OSError, SyntaxError) as exc:
-        raise ValueError(f"{bot_path}: cannot read bot file - {exc}") from exc
-
-    for node in tree.body:  # module level only, same discipline as read_squadron
-        if not (isinstance(node, ast.Assign)
-                and any(isinstance(t, ast.Name) and t.id == "API_VERSION" for t in node.targets)):
-            continue
-        value = node.value
-        if isinstance(value, ast.Constant) and isinstance(value.value, int) \
-                and not isinstance(value.value, bool):
-            return value.value
-        raise ValueError(f"{bot_path}: API_VERSION must be an integer literal, "
-                         f"e.g. API_VERSION = {API_VERSION}")
-    return None
+    value = _module_assign(bot_path, "API_VERSION")
+    if value is None:
+        return None
+    if isinstance(value, ast.Constant) and isinstance(value.value, int) \
+            and not isinstance(value.value, bool):
+        return value.value
+    raise ValueError(f"{bot_path}: API_VERSION must be an integer literal, "
+                     f"e.g. API_VERSION = {API_VERSION}")
 
 
 def check_api_version(bot_path: Path) -> None:
