@@ -2,7 +2,7 @@
  * sky-battle replay viewer.
  *
  * Loads a replay written by the engine (one JSON header line, then one JSON
- * frame per tick -- contract in docs/plans/2026-09-10-browser-viewer.md) and
+ * frame per tick -- contract in skybattle/replay.py) and
  * renders it to a canvas. Holds NO game logic: every fact drawn -- position,
  * heading, hp, alive, ammo, score -- already exists in the stream. If a fact
  * isn't there, it isn't drawn here either.

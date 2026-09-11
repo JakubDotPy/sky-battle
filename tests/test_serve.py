@@ -1,8 +1,7 @@
 """The `serve` subcommand: page, round index, replay bytes, gzip header, 404s, path safety.
 
-The viewer page and script are owned by a concurrent task (see the browser-viewer plan). If they
-are not there yet, these tests fill in placeholders good enough to serve -- and never overwrite
-files that already exist.
+If the viewer page and script are not there, these tests fill in placeholders good enough to
+serve -- and never overwrite files that already exist.
 """
 
 import gzip
