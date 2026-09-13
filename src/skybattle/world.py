@@ -125,8 +125,8 @@ class World:
                 # Offset squadmates along the formation's own tangent, so a squadron's internal
                 # geometry is identical to every other squadron's up to the shared rotation.
                 tangent = base + 90.0
-                ox = geom.cos_deg(tangent) * slot * 40.0
-                oy = geom.sin_deg(tangent) * slot * 40.0
+                ox = geom.cos_deg(tangent) * slot * 150.0
+                oy = geom.sin_deg(tangent) * slot * 150.0
                 self.planes[next_id] = Plane(
                     id=next_id, squadron=sq, kind=kind, cls=cls,
                     x=(cx + ox) % w, y=(cy + oy) % h,
