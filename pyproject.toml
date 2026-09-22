@@ -12,7 +12,7 @@ sky-battle = "skybattle.cli:main"
 dev = [
     "pre-commit>=4.6.2",
     "pytest>=8",
-    "ruff>=0.6",
+    "ruff>=0.16.6,<0.17",  # pinned to the ruff-pre-commit rev; bump both together
     "zensical>=0.0.60",
 ]
 

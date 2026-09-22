@@ -329,7 +329,7 @@ dev = [
 dev = [
     { name = "pre-commit", specifier = ">=4.6.2" },
     { name = "pytest", specifier = ">=8" },
-    { name = "ruff", specifier = ">=0.6" },
+    { name = "ruff", specifier = ">=0.16.6,<0.17" },
     { name = "zensical", specifier = ">=0.0.60" },
 ]
 

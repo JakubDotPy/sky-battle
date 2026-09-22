@@ -12,8 +12,10 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Kept in step with the ruff in uv.lock. If the two drift, the hook and a
-    # local `ruff format` disagree about the same file and the gate flaps.
+    # Held to the ruff in uv.lock, which pyproject constrains to the same minor.
+    # If the two drift, the hook and a local `uv run ruff format` disagree about
+    # the same file and the gate flaps, so `autoupdate` here needs a matching
+    # `uv lock --upgrade-package ruff`.
     rev: v0.16.6
     hooks:
       # Run the linter.
@@ -32,4 +34,6 @@ repos:
   - repo: https://github.com/rvben/rumdl-pre-commit
     rev: v0.2.75
     hooks:
+      # Not pinned to the rumdl on PATH: it is a user-level `uv tool install`,
+      # not a project dependency, so the repo has nothing to pin it against.
       - id: rumdl-fmt  # Auto-format
