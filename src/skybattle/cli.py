@@ -117,19 +117,25 @@ def make_server(replay_dir: Path, port: int = 8765) -> http.server.ThreadingHTTP
 
 
 def _print_result_lines(result: MatchResult, labels: dict[int, str]) -> None:
-    """One line per squadron: name, points, accepted N/total, strikes, forfeits.
+    """One line per squadron: name, points, accepted N/total, rejects, strikes, forfeits.
+
+    `rejects` counts action components the engine refused or clamped. It is not a failure the
+    way a strike is -- a clamped throttle still flies -- but it is the only hint on this line
+    that a bot is sending values the engine had to correct, which is otherwise visible only to
+    a bot that reads its own `ActionRejected` events.
 
     Shared by `duel` and `play` so the two commands report in one format; each caller prints
     its own winner line afterward, since `play` names the host's player, not a squadron index.
     """
     for sq in sorted(result.totals):
         acc = sum(r.accepted[sq] for r in result.rounds)
+        rejects = sum(r.rejects[sq] for r in result.rounds)
         ticks = sum(r.ticks for r in result.rounds)
         strikes = sum(r.strikes[sq] for r in result.rounds)
         forfeits = sum(1 for r in result.rounds if r.forfeited[sq])
         print(
             f"squadron {sq} ({labels[sq]}): {result.totals[sq]:8.1f} points  "
-            f"accepted {acc}/{ticks}  strikes {strikes}  forfeits {forfeits}"
+            f"accepted {acc}/{ticks}  rejects {rejects}  strikes {strikes}  forfeits {forfeits}"
         )
 
 

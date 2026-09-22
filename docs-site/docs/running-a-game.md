@@ -54,8 +54,8 @@ flies exactly that instead, bomber included, with no extra flag needed:
 
 ```console
 $ sky-battle duel bots/alice.py bots/bob.py --seed 7 --rounds 11
-squadron 0 (alice.py):   2170.4 points  accepted 6749/6749  strikes 0  forfeits 0
-squadron 1 (bob.py):   3722.4 points  accepted 6749/6749  strikes 0  forfeits 0
+squadron 0 (alice.py):   2170.4 points  accepted 6749/6749  rejects 0  strikes 0  forfeits 0
+squadron 1 (bob.py):   3722.4 points  accepted 6749/6749  rejects 0  strikes 0  forfeits 0
 winner: squadron 1
 ```
 
@@ -66,22 +66,22 @@ line says so — the composition lives entirely in the bot files.
 ## Reading the result line
 
 ```text
-squadron 0 (alice.py):    724.4 points  accepted 2580/2580  strikes 0  forfeits 0
-squadron 1 (bob.py):      436.0 points  accepted 2580/2580  strikes 0  forfeits 0
+squadron 0 (alice.py):    724.4 points  accepted 2580/2580  rejects 0  strikes 0  forfeits 0
+squadron 1 (bob.py):      436.0 points  accepted 2580/2580  rejects 0  strikes 0  forfeits 0
 winner: squadron 0
 ```
 
-The important number is **`accepted N/total`**, not a timeout count. That distinction matters
-because a bot that is only *occasionally* slow degrades gracefully, one skipped tick at a time —
-but a bot that is *consistently* a little over its deadline never lands a single action: every
-reply arrives after the tick it was for has already moved on, so it is discarded as stale, and
-the bot ends up holding its very first action for the entire match while its miss count climbs.
-`timeouts: 900/3000` would invite you to assume the other 2100 ticks used the bot's actual
-choices — false in that scenario. `accepted: 1140/3000` is the honest number, and the one that
-actually explains a bot's final score. `strikes` counts every miss (timeout, crash, or malformed
-reply); `forfeits` counts rounds where a squadron hit the strike limit and was disabled for the
-rest of that round — its planes keep existing and keep coasting rather than vanishing, so the
-round's physics stay fair to the other player.
+The important number is **`accepted N/total`**, not a timeout count. That distinction matters because a bot that is only
+*occasionally* slow degrades gracefully, one skipped tick at a time — but a bot that is *consistently* a little over its
+deadline never lands a single action: every reply arrives after the tick it was for has already moved on, so it is
+discarded as stale, and the bot ends up holding its very first action for the entire match while its miss count climbs.
+`timeouts: 900/3000` would invite you to assume the other 2100 ticks used the bot's actual choices — false in that
+scenario. `accepted: 1140/3000` is the honest number, and the one that actually explains a bot's final score. `rejects`
+counts action components the engine refused or had to clamp. It is not a miss — a clamped throttle still flies — but a
+bot with a non-zero `rejects` is sending values the engine is correcting, and that is worth knowing before reading
+anything into its score. `strikes` counts every miss (timeout, crash, or malformed reply); `forfeits` counts rounds
+where a squadron hit the strike limit and was disabled for the rest of that round — its planes keep existing and keep
+coasting rather than vanishing, so the round's physics stay fair to the other player.
 
 ## Watching a match: the browser viewer
 
@@ -156,9 +156,9 @@ Run it with `play`:
 
 ```console
 $ sky-battle play game.toml
-squadron 0 (jakub):   1964.0 points  accepted 8268/8268  strikes 0  forfeits 0
-squadron 1 (anna):   1294.8 points  accepted 8268/8268  strikes 0  forfeits 0
-squadron 2 (petr):   3938.0 points  accepted 8268/8268  strikes 0  forfeits 0
+squadron 0 (jakub):   1964.0 points  accepted 8268/8268  rejects 0  strikes 0  forfeits 0
+squadron 1 (anna):   1294.8 points  accepted 8268/8268  rejects 0  strikes 0  forfeits 0
+squadron 2 (petr):   3938.0 points  accepted 8268/8268  rejects 0  strikes 0  forfeits 0
 winner: petr
 ```
 

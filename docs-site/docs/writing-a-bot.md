@@ -377,7 +377,7 @@ consequence instead:
 | Your `act` raises | The traceback prints to your own bot's stderr; the engine receives a clean `{"error": ...}` and treats the tick as a miss for that squadron — every plane in it coasts (holds its last accepted action) this tick. |
 | Your `act` takes too long | Same as raising: on a 50 ms per-tick deadline (tick 1 gets ~2 seconds, since that is where module-level imports land), a late reply is dropped as a miss and the plane coasts. |
 | You reply with something that is not a `dict`, has a non-integer or unknown-plane key, or a value that is not a legal `Action` | Only that plane coasts; the rest of your squadron is unaffected. You get an `ActionRejected` event next tick naming the reason (`not_a_dict`, `bad_key:...`, `unknown_plane`, `not_an_action`, `bad_fire`, `unknown_gun:N`). |
-| A throttle or steer value outside its legal range | Clamped to range, logged as `ActionRejected(..., "clamped")`. Still applied — just clamped. |
+| A throttle or steer value outside its legal range | Clamped to range, logged as `ActionRejected(..., "clamped")`. Still applied — just clamped. Every rejection here, clamps included, also shows up in the `rejects` column of the end-of-match summary, so you can spot this without reading your own events. |
 | `NaN` or infinity anywhere in your reply | **Never clamped** — rejected outright, because `NaN` clamps to `NaN` and would poison the physics for both players. |
 | Three misses in a row (or, past tick 50, misses on more than 2% of all ticks so far) | Your squadron **forfeits**: its planes keep existing and keep coasting for the rest of the round rather than vanishing, so the match's physics stay consistent for the other player, but you can no longer win the round. |
 

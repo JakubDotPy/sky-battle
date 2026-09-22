@@ -19,6 +19,7 @@ class RoundResult(NamedTuple):
     outcome: str
     ticks: int
     accepted: dict[int, int]
+    rejects: dict[int, int]
     strikes: dict[int, int]
     forfeited: dict[int, bool]
 
@@ -76,6 +77,7 @@ def run_round(
             outcome=world.outcome(),
             ticks=world.tick_no,
             accepted={sq: b.accepted for sq, b in enumerate(bots)},
+            rejects=dict(world.rejects),
             strikes={sq: b.strikes for sq, b in enumerate(bots)},
             forfeited={sq: b.forfeited for sq, b in enumerate(bots)},
         )

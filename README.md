@@ -12,10 +12,14 @@ across your squadron. So the interesting part of writing a bot is rarely the sho
 went.
 
 ```text
-squadron 0 (leader):    824.4 points  accepted 2166/2166  strikes 0  forfeits 0
-squadron 1 (chaser):    566.8 points  accepted 2166/2166  strikes 0  forfeits 0
-winner: leader
+squadron 0 (leader.py):    986.4 points  accepted 925/925  rejects 0  strikes 0  forfeits 0
+squadron 1 (chaser.py):    184.0 points  accepted 925/925  rejects 0  strikes 0  forfeits 0
+winner: squadron 0
 ```
+
+**Full documentation: <https://jakubdotpy.github.io/sky-battle/>** — the game, the plane classes with
+comparative diagrams, the complete bot-writing guide, and how to host a game. It is rebuilt from `docs-site/`
+on every push to `main`.
 
 ## Quick start
 
@@ -156,8 +160,9 @@ Both `zensical` commands must run from `docs-site/` — it looks for `zensical.t
 
 ## Documentation
 
-- **Players and hosts:** `docs-site/` — the game, the classes with comparative diagrams, writing a bot, hosting a
-  game. Every stat on those pages is read live from the balance table at build time, so it cannot drift.
+- **Players and hosts:** <https://jakubdotpy.github.io/sky-battle/>, built from `docs-site/` — the game, the
+  classes with comparative diagrams, writing a bot, hosting a game. Every stat on those pages is read live from
+  the balance table at build time, so it cannot drift.
 - **Balance:** every number lives in `src/skybattle/classes.toml`, and it is meant to be edited. Nothing in that
   table has been tuned as a set; treat every value as a placeholder until a balance pass says otherwise.
 

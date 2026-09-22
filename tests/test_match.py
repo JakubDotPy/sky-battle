@@ -78,6 +78,18 @@ def test_accepted_is_reported_alongside_strikes():
     assert r.strikes[0] == 0
 
 
+def test_clamped_actions_are_counted_as_rejects_and_a_clean_bot_scores_none():
+    """The scoreboard's only hint that a bot is sending values the engine has to correct.
+
+    `accepted` stays full for both -- a clamped action is still applied -- so without this
+    counter an out-of-range bot is indistinguishable from a correct one on the summary line.
+    """
+    dirty = run_round([BOTS / "out_of_range.py", BOTS / "good.py"], SQ, seed=1, arena=ARENA, classes=CLASSES)
+    assert dirty.rejects[0] > 0
+    assert dirty.rejects[1] == 0
+    assert dirty.accepted[0] == dirty.accepted[1]
+
+
 def test_a_match_is_eleven_rounds_and_sums_scores():
     m = run_match([BOTS / "good.py", BOTS / "good.py"], SQ, seed=1, rounds=3, arena=ARENA, classes=CLASSES)
     assert len(m.rounds) == 3

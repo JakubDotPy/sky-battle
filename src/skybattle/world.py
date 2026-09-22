@@ -89,6 +89,9 @@ class World:
         drain ended this round" from "a drain death merely happened at some point".
         """
         self.kills_while_alive: dict[int, int] = dict.fromkeys(range(len(squadrons)), 0)
+        self.rejects: dict[int, int] = dict.fromkeys(range(len(squadrons)), 0)
+        """Rejected action components this round, cumulative -- `_events` is cleared every
+        tick, so a round-level count has to be kept separately."""
         self._events: dict[int, list[object]] = {sq: [] for sq in range(len(squadrons))}
         self._squadron_rng = {sq: random.Random(self.squadron_seed(sq)) for sq in range(len(squadrons))}
         """Each squadron's bot RNG, created ONCE and handed out by reference every tick.
@@ -176,6 +179,7 @@ class World:
             live = tuple(sorted(p.id for p in self.planes.values() if p.alive and p.squadron == sq))
             accepted, rejects = validate(raw, live)
             actions.update(accepted)
+            self.rejects[sq] += len(rejects)
             for pid, reason in rejects:
                 self._events[sq].append(ActionRejected(plane_id=pid, reason=reason))
         self.last_actions = actions
@@ -203,6 +207,7 @@ class World:
                 continue
             for gi in sorted(a.fire):
                 if gi < 0 or gi >= len(p.cls.guns):
+                    self.rejects[p.squadron] += 1
                     self._events[p.squadron].append(ActionRejected(plane_id=pid, reason=f"unknown_gun:{gi}"))
                     continue
                 if p.cooldown[gi] > 0 or p.ammo[gi] <= 0:
