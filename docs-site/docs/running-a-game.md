@@ -179,6 +179,13 @@ in the *same* arena at the *same* time, against both opponents at once — jakub
 petr's squadrons each saw the other two as ordinary contacts. It is one match with three
 squadrons, not three matches with two.
 
+A ready-made one lives in `games/three-by-three/`: three players, three planes each, with a
+different loadout per bot — three fighters, two scouts and a fighter, two bombers and a scout.
+
+```console
+sky-battle play games/three-by-three/game.toml --replay-dir replays/
+```
+
 ## Running a small tournament
 
 There is still no dedicated tournament subcommand — a full double round-robin ranking is still a

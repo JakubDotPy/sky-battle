@@ -1,0 +1,25 @@
+# Three squadrons, three planes each.
+#
+# Squadrons spawn 120 degrees apart on a ring, so every fight starts as a three-way: nobody
+# has a back to the wall, and whoever engages first is the one exposed to the third player.
+# `planes_per_player` is enforced against every bot's own SQUADRON, so all three bots below
+# declare exactly three planes -- a two-plane bot is rejected before the match starts.
+
+[game]
+rounds            = 11
+ticks_per_round   = 3000
+planes_per_player = 3
+arena             = [2000, 2000]
+seed              = 7
+
+[[players]]
+name = "swarm"
+bot  = "swarm.py"
+
+[[players]]
+name = "recon"
+bot  = "recon.py"
+
+[[players]]
+name = "heavy"
+bot  = "heavy.py"
