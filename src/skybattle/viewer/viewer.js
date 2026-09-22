@@ -30,7 +30,10 @@ const BRACKET_PAD = 7; // gap between the selected plane and its target brackets
 const BULLET_RADIUS = 2;
 const DEAD_ALPHA = 0.35;
 const FOG_ALPHA = 0.3; // enemy plane absent from the selected squadron's visible[] this tick
-const SELECT_HIT_PAD = 6; // extra px of click slop beyond a plane's drawn radius
+const SELECT_HIT_PAD = 12; // extra px of click slop beyond a plane's drawn radius.
+// Sized for the SMALLEST class: a scout draws at radius 6, so anything less makes its
+// target smaller than the average person's aim, and a near miss reads as a deselect.
+// Overlapping planes stay unambiguous because the hit test below takes the nearest.
 const CONE_FILL_ALPHA = 0.12;
 const CONE_EDGE_ALPHA = 0.5;
 const BUBBLE_EDGE_ALPHA = 0.22; // subordinate to the cone -- context, not the subject
@@ -47,7 +50,7 @@ const degradedTicksEl = document.getElementById("degraded-ticks");
 const roundSelect = document.getElementById("round-select");
 const tickReadout = document.getElementById("tick-readout");
 const frameReadout = document.getElementById("frame-readout");
-const scoreEls = [document.getElementById("score-0"), document.getElementById("score-1")];
+const scoresEl = document.getElementById("scores");
 const botNamesEl = document.getElementById("bot-names");
 const scrub = document.getElementById("scrub");
 const playBtn = document.getElementById("play");
@@ -179,11 +182,23 @@ async function loadReplay(name) {
   state.header.bots.forEach((b, i) => {
     if (i > 0) frag.appendChild(document.createTextNode("  vs  "));
     const span = document.createElement("span");
-    span.className = `bot-${i}`;
+    span.style.color = squadronColor(i); // same palette the canvas uses, for any squadron count
     span.textContent = basename(b.path);
     frag.appendChild(span);
   });
   botNamesEl.replaceChildren(frag);
+
+  // One score chip per squadron in the replay. Two used to be written out in the markup, so a
+  // third player's score simply had nowhere to go.
+  scoresEl.replaceChildren(
+    ...state.header.bots.map((b, i) => {
+      const chip = document.createElement("span");
+      chip.className = "score";
+      chip.style.color = chip.style.borderColor = squadronColor(i);
+      chip.textContent = `${basename(b.path)} --`;
+      return chip;
+    }),
+  );
 
   showStatus("");
   resizeCanvas();
@@ -578,12 +593,11 @@ function drawReadout(frame) {
   tickReadout.textContent = String(frame.tick);
   frameReadout.textContent = `${state.index + 1} / ${state.frames.length}`;
   scrub.value = String(state.index);
-  for (let i = 0; i < scoreEls.length; i++) {
-    if (!scoreEls[i]) continue;
+  for (const [i, chip] of [...scoresEl.children].entries()) {
     const score = frame.scores[String(i)];
     const bot = state.header.bots[i];
     const label = bot ? basename(bot.path) : `SQ${i}`;
-    scoreEls[i].textContent = `${label} ${score === undefined ? "--" : score.toFixed(1)}`;
+    chip.textContent = `${label} ${score === undefined ? "--" : score.toFixed(1)}`;
   }
 }
 

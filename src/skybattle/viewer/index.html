@@ -58,14 +58,14 @@ header .label { color: var(--text-dim); }
 
 #tick-readout { color: var(--accent); }
 
+#scores { display: inline-flex; gap: 0.5rem; }
+
 .score {
   padding: 0.1rem 0.4rem;
   border: 1px solid var(--border);
   border-radius: 2px;
 }
 
-#score-0 { color: var(--squadron-0); border-color: var(--squadron-0); }
-#score-1 { color: var(--squadron-1); border-color: var(--squadron-1); }
 
 #degraded-badge {
   padding: 0.1rem 0.5rem;
@@ -76,8 +76,6 @@ header .label { color: var(--text-dim); }
 }
 
 #bot-names { color: var(--text-dim); margin-left: auto; }
-#bot-names .bot-0 { color: var(--squadron-0); }
-#bot-names .bot-1 { color: var(--squadron-1); }
 
 #round-select {
   background: var(--bg);
@@ -238,8 +236,7 @@ footer button.active { border-color: var(--accent); color: var(--accent); }
 <body>
 <header>
   <span><span class="label">TICK</span> <span id="tick-readout">--</span></span>
-  <span class="score" id="score-0">SQ0 --</span>
-  <span class="score" id="score-1">SQ1 --</span>
+  <span id="scores"></span>
   <span id="degraded-badge" hidden></span>
   <span id="bot-names"></span>
   <select id="round-select" hidden></select>
