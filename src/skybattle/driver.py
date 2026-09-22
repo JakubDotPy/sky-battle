@@ -8,6 +8,7 @@ same interpreter cannot be interrupted: signals only run between bytecodes on th
 and a thread cannot be killed. Robustness, not security, is what forces the subprocess.
 """
 
+import contextlib
 import json
 import os
 import selectors
@@ -142,25 +143,21 @@ class BotProcess:
         if self._closed:
             return
         self._closed = True
-        try:
+        # best-effort teardown, never blocks a match
+        with contextlib.suppress(Exception):
             self._sel.close()
-        except Exception:  # noqa: BLE001, S110 -- best-effort teardown, never blocks a match
-            pass
         for stream in (self.proc.stdin, self.proc.stdout):
-            try:
+            # a pipe may already be broken at shutdown
+            with contextlib.suppress(Exception):
                 stream.close()
-            except Exception:  # noqa: BLE001, S110 -- a pipe may already be broken at shutdown
-                pass
         if self.proc.poll() is None:
             try:
                 # killpg, not kill: reap any helpers the bot spawned.
                 os.killpg(os.getpgid(self.proc.pid), signal.SIGKILL)
             except (ProcessLookupError, PermissionError):
                 self.proc.kill()
-        try:
+        with contextlib.suppress(subprocess.TimeoutExpired):
             self.proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            pass
 
     def __enter__(self) -> Self:
         return self

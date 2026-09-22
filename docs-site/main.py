@@ -70,7 +70,10 @@ def airframe_table() -> str:
 
 
 def gun_table() -> str:
-    header = "| Class | Mount | Bearing | Dispersion | Cooldown | Damage | Ammo | Lifetime | Muzzle | Sustained DPS |"
+    header = (
+        "| Class | Mount | Bearing | Dispersion | Cooldown | Damage | Ammo | Lifetime |"
+        " Muzzle | Sustained DPS |"
+    )
     sep = "|---|---|---|---|---|---|---|---|---|---|"
     rows = [header, sep]
     for k in ORDER:
@@ -132,7 +135,7 @@ def radar_chart() -> str:
 
     # Step 1 - one ring + label per axis, laid out clockwise starting at 12 o'clock.
     rings = []
-    for i, (label, values) in enumerate(axes):
+    for i, (label, _values) in enumerate(axes):
         angle = -math.pi / 2 + i * 2 * math.pi / n
         ax, ay = cx + r_max * math.cos(angle), cy + r_max * math.sin(angle)
         rings.append(
@@ -196,9 +199,12 @@ def turn_curve_chart() -> str:
     axis = (
         f'<line x1="{left}" y1="{top + h}" x2="{left + w}" y2="{top + h}" stroke="currentColor" />'
         f'<line x1="{left}" y1="{top}" x2="{left}" y2="{top + h}" stroke="currentColor" />'
-        f'<text x="{left}" y="{top + h + 20}" font-size="11" fill="currentColor" text-anchor="middle">stall</text>'
-        f'<text x="{left + w / 2}" y="{top + h + 20}" font-size="11" fill="currentColor" text-anchor="middle">corner</text>'
-        f'<text x="{left + w}" y="{top + h + 20}" font-size="11" fill="currentColor" text-anchor="middle">max</text>'
+        f'<text x="{left}" y="{top + h + 20}" font-size="11" fill="currentColor"'
+        f' text-anchor="middle">stall</text>'
+        f'<text x="{left + w / 2}" y="{top + h + 20}" font-size="11" fill="currentColor"'
+        f' text-anchor="middle">corner</text>'
+        f'<text x="{left + w}" y="{top + h + 20}" font-size="11" fill="currentColor"'
+        f' text-anchor="middle">max</text>'
         f'<text x="{left - 10}" y="{top}" font-size="11" fill="currentColor" text-anchor="end">'
         f"{max_turn / 1.1:.0f} deg/tick</text>"
     )

@@ -10,6 +10,7 @@ sky-battle = "skybattle.cli:main"
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.6.2",
     "pytest>=8",
     "ruff>=0.6",
     "zensical>=0.0.60",
@@ -24,6 +25,35 @@ packages = ["src/skybattle"]
 
 [tool.ruff]
 line-length = 110
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",   # pycodestyle + pyflakes, the baseline
+    "I",             # import sorting
+    "UP",            # pyupgrade: this is a 3.13+ package, say so
+    "B",             # bugbear
+    "S",             # bandit
+    "BLE",           # blind-except
+    "SIM",           # simplify
+    "C4",            # comprehensions
+    "RET",           # return
+    "PTH",           # prefer pathlib
+    "PIE", "PERF",   # misc lints and perf
+    "RUF",           # ruff's own, incl. RUF100 for noqa that stopped applying
+]
+ignore = [
+    "S311",   # the arena RNG seeds a game, it is not a cryptographic one
+    "S603",   # running an author's bot as a subprocess is the product, not a lapse
+    "COM812", # both conflict with the formatter
+    "ISC001",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# A bot declares SQUADRON above its imports because the engine reads it by AST,
+# without importing the module. That ordering is the contract, not an accident.
+"samples/**" = ["E402"]
+"games/**" = ["E402"]
+"tests/**" = ["S101", "S310"]  # asserting is the job; the URL opened is the test's own server
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -78,7 +78,7 @@ class World:
         self.bullets: list[bul.Bullet] = []
         self.planes: dict[int, Plane] = {}
         self.tracker = vision.ContactTracker()
-        self.damage_dealt: dict[int, float] = {sq: 0.0 for sq in range(len(squadrons))}
+        self.damage_dealt: dict[int, float] = dict.fromkeys(range(len(squadrons)), 0.0)
         self.kills: dict[int, list[int]] = {sq: [] for sq in range(len(squadrons))}
         self._damage_ledger: dict[tuple[int, int], float] = {}
         self.ticks_since_damage = 0
@@ -88,7 +88,7 @@ class World:
         Combat clears it (same as `ticks_since_damage`), so at round end it distinguishes "the
         drain ended this round" from "a drain death merely happened at some point".
         """
-        self.kills_while_alive: dict[int, int] = {sq: 0 for sq in range(len(squadrons))}
+        self.kills_while_alive: dict[int, int] = dict.fromkeys(range(len(squadrons)), 0)
         self._events: dict[int, list[object]] = {sq: [] for sq in range(len(squadrons))}
         self._squadron_rng = {sq: random.Random(self.squadron_seed(sq)) for sq in range(len(squadrons))}
         """Each squadron's bot RNG, created ONCE and handed out by reference every tick.

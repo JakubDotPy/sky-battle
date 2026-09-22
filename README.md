@@ -145,7 +145,10 @@ far ahead.
 | `uv run sky-battle serve replays/` | Browser replay viewer |
 | `uv run sky-battle duel --rules` | Print the balance table and exit |
 | `uv run pytest -q` | The test suite |
-| `uv run ruff check src tests samples` | Lint |
+| `uv run ruff check` | Lint (rules and per-file exceptions live in `pyproject.toml`) |
+| `uv run ruff format` | Format, including the Python inside fenced blocks in the docs |
+| `pre-commit install` | Wire the hooks up once, per clone |
+| `pre-commit run --all-files` | Run every hook over the whole tree |
 | `cd docs-site && uv run zensical serve` | Player docs at <http://localhost:8000>, live-rebuilding |
 | `cd docs-site && uv run zensical build` | Static docs into `docs-site/site/` |
 

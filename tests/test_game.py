@@ -76,7 +76,7 @@ def test_a_malformed_toml_file_is_rejected_naming_the_file(tmp_path):
     game_file = _write(tmp_path / "game.toml", "this is not [ valid toml")
     with pytest.raises(ValueError, match="not valid TOML"):
         load_game(game_file)
-    with pytest.raises(ValueError, match="game.toml"):
+    with pytest.raises(ValueError, match=r"game\.toml"):
         load_game(game_file)
 
 

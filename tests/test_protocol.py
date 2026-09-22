@@ -132,5 +132,5 @@ def test_the_encoder_pins_ownplane_layout():
     state.py's contract is additive-only, which means the SUPPORTED change (appending a field)
     is exactly the one a hardcoded slice would drop without error.
     """
-    assert protocol._SCALARS == OwnPlane._fields.index("guns")
+    assert OwnPlane._fields.index("guns") == protocol._SCALARS
     assert OwnPlane._fields[protocol._SCALARS :] == ("guns", "contacts", "bubble_range")

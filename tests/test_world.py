@@ -244,7 +244,7 @@ def test_views_is_idempotent_within_a_tick():
     first = w.views()
     second = w.views()
     assert first == second
-    assert [e for e in first[0].events] == [e for e in second[0].events]
+    assert list(first[0].events) == list(second[0].events)
 
 
 def test_different_seeds_produce_different_spawns():
