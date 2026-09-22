@@ -23,9 +23,17 @@ class Bullet(NamedTuple):
     ticks_left: int
 
 
-def spawn(gun: GunSpec, gun_index: int, owner_id: int, squadron: int,
-          x: float, y: float, heading_deg: float, speed: float,
-          rng: random.Random) -> Bullet:
+def spawn(
+    gun: GunSpec,
+    gun_index: int,
+    owner_id: int,
+    squadron: int,
+    x: float,
+    y: float,
+    heading_deg: float,
+    speed: float,
+    rng: random.Random,
+) -> Bullet:
     """Fire one round.
 
     Guns are FIXED mounts: the round leaves along the mount's bearing, never aimed. What varies
@@ -48,9 +56,17 @@ def spawn(gun: GunSpec, gun_index: int, owner_id: int, squadron: int,
     direction = geom.normalize_deg(heading_deg + gun.bearing_deg + spread)
     vx = geom.cos_deg(direction) * gun.muzzle_speed + geom.cos_deg(heading_deg) * speed
     vy = geom.sin_deg(direction) * gun.muzzle_speed + geom.sin_deg(heading_deg) * speed
-    return Bullet(x=x, y=y, vx=vx, vy=vy,
-                  damage=gun.damage, squadron=squadron, owner_id=owner_id, gun=gun_index,
-                  ticks_left=gun.lifetime_ticks)
+    return Bullet(
+        x=x,
+        y=y,
+        vx=vx,
+        vy=vy,
+        damage=gun.damage,
+        squadron=squadron,
+        owner_id=owner_id,
+        gun=gun_index,
+        ticks_left=gun.lifetime_ticks,
+    )
 
 
 def advance(b: Bullet, arena: tuple[float, float]) -> Bullet | None:

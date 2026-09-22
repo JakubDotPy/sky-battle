@@ -119,7 +119,7 @@ shortest signed offset *first*, then every downstream geometry routine works unm
 
 ```python
 def wrap_delta(d, L):
-    return (d + L / 2) % L - L / 2          # shortest signed offset
+    return (d + L / 2) % L - L / 2  # shortest signed offset
 ```
 
 `wrap_delta` does **double duty**: with `L = 2 * pi` it is also the angle-difference function, which is the other

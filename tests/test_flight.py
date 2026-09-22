@@ -78,8 +78,8 @@ def test_steer_sign_positive_is_left_ccw_positive():
     c = CLASSES["fighter"]
     _, _, left, _ = flight.step(c, 500.0, 500.0, 0.0, 5.0, 100, 100, 0.0, 1.0, ARENA)
     _, _, right, _ = flight.step(c, 500.0, 500.0, 0.0, 5.0, 100, 100, 0.0, -1.0, ARENA)
-    assert 0.0 < left < 90.0          # heading increased
-    assert right > 270.0              # heading decreased and wrapped below zero
+    assert 0.0 < left < 90.0  # heading increased
+    assert right > 270.0  # heading decreased and wrapped below zero
 
 
 def test_position_wraps_across_the_seam():

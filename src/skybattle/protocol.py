@@ -28,16 +28,13 @@ from .state import (
 # wire key instead, same as `guns` and `contacts` do.
 _SCALARS = OwnPlane._fields.index("guns")
 if OwnPlane._fields[_SCALARS:] != ("guns", "contacts", "bubble_range"):
-    raise RuntimeError(
-        f"OwnPlane layout changed to {OwnPlane._fields!r}; update encode_view/decode_view"
-    )
+    raise RuntimeError(f"OwnPlane layout changed to {OwnPlane._fields!r}; update encode_view/decode_view")
 
 # The wire already carries `[type_name, fields]`, so handing a bot the named type costs one
 # lookup. It has to: the in-process path (`World.views()`) delivers real event types, so an
 # untyped wire path would be a divergence that passes a harness test and misreads a live match.
 _EVENT_TYPES = {
-    cls.__name__: cls
-    for cls in (HitByBullet, BulletHit, PlaneDestroyed, ContactLost, ActionRejected)
+    cls.__name__: cls for cls in (HitByBullet, BulletHit, PlaneDestroyed, ContactLost, ActionRejected)
 }
 
 
@@ -87,15 +84,28 @@ def decode_view(payload: dict) -> View:
     planes = []
     for entry in payload["planes"]:
         head = entry["p"]
-        planes.append(OwnPlane(
-            *head,
-            guns=tuple(Gun(g[0], *(float(v) for v in g[1:3]), int(g[3]), int(g[4]), float(g[5]))
-                       for g in entry["guns"]),
-            contacts=tuple(Contact(int(c[0]), c[1], *(float(v) for v in c[2:6]), int(c[6]),
-                                   float(c[7]), float(c[8]), tuple(int(i) for i in c[9]))
-                           for c in entry["contacts"]),
-            bubble_range=float(entry["bubble_range"]),
-        ))
+        planes.append(
+            OwnPlane(
+                *head,
+                guns=tuple(
+                    Gun(g[0], *(float(v) for v in g[1:3]), int(g[3]), int(g[4]), float(g[5]))
+                    for g in entry["guns"]
+                ),
+                contacts=tuple(
+                    Contact(
+                        int(c[0]),
+                        c[1],
+                        *(float(v) for v in c[2:6]),
+                        int(c[6]),
+                        float(c[7]),
+                        float(c[8]),
+                        tuple(int(i) for i in c[9]),
+                    )
+                    for c in entry["contacts"]
+                ),
+                bubble_range=float(entry["bubble_range"]),
+            )
+        )
     return View(
         tick=int(payload["tick"]),
         arena=(float(payload["arena"][0]), float(payload["arena"][1])),
@@ -112,7 +122,8 @@ def encode_actions(actions: dict[int, Action]) -> dict:
 def decode_actions(payload: dict) -> dict[int, Action]:
     """Raises on anything malformed. The driver catches and counts a strike."""
     return {
-        int(pid): Action(throttle=float(body[0]), steer=float(body[1]),
-                         fire=frozenset(int(g) for g in body[2]))
+        int(pid): Action(
+            throttle=float(body[0]), steer=float(body[1]), fire=frozenset(int(g) for g in body[2])
+        )
         for pid, body in payload.items()
     }

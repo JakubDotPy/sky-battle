@@ -12,9 +12,9 @@ import math
 from . import geom
 
 
-def swept_hit(px: float, py: float, radius: float,
-              sx: float, sy: float, dx: float, dy: float,
-              w: float, h: float) -> float | None:
+def swept_hit(
+    px: float, py: float, radius: float, sx: float, sy: float, dx: float, dy: float, w: float, h: float
+) -> float | None:
     """Fraction of the step [0, 1] at which the segment first enters the disc, else None.
 
     (px, py) is the disc centre; (sx, sy) the segment start; (dx, dy) its displacement.
@@ -28,7 +28,7 @@ def swept_hit(px: float, py: float, radius: float,
     ox, oy = geom.delta(px, py, sx, sy, w, h)
 
     a = dx * dx + dy * dy
-    if a == 0.0:                                  # not moving: plain overlap test
+    if a == 0.0:  # not moving: plain overlap test
         return 0.0 if ox * ox + oy * oy <= radius * radius else None
 
     # |offset + t*displacement|^2 = radius^2

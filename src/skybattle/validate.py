@@ -18,8 +18,7 @@ def _finite(*values: float) -> bool:
     return all(math.isfinite(v) for v in values)
 
 
-def validate(raw: object,
-             live_ids: tuple[int, ...]) -> tuple[dict[int, Action], tuple[tuple[int, str], ...]]:
+def validate(raw: object, live_ids: tuple[int, ...]) -> tuple[dict[int, Action], tuple[tuple[int, str], ...]]:
     """Returns (accepted actions by plane id, rejections as (plane_id, reason))."""
     rejects: list[tuple[int, str]] = []
     if not isinstance(raw, dict):
@@ -31,7 +30,7 @@ def validate(raw: object,
 
     live = set(live_ids)
     out: dict[int, Action] = {}
-    for key in sorted(raw, key=repr):        # deterministic order for the reject log
+    for key in sorted(raw, key=repr):  # deterministic order for the reject log
         value = raw[key]
         if not isinstance(key, int) or isinstance(key, bool):
             rejects.append((-1, f"bad_key:{key!r}"))
@@ -42,8 +41,9 @@ def validate(raw: object,
         if not isinstance(value, Action):
             rejects.append((key, "not_an_action"))
             continue
-        if not isinstance(value.fire, (set, frozenset)) or \
-                any(not isinstance(g, int) or isinstance(g, bool) for g in value.fire):
+        if not isinstance(value.fire, (set, frozenset)) or any(
+            not isinstance(g, int) or isinstance(g, bool) for g in value.fire
+        ):
             rejects.append((key, "bad_fire"))
             continue
         if not _finite(value.throttle, value.steer):

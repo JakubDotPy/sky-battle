@@ -24,11 +24,11 @@ class Bot:
         out = {}
         for p in state.planes:
             if p.kind == "scout":
-                out[p.id] = Action(throttle=0.85, steer=0.08)   # eyes only, never engages
+                out[p.id] = Action(throttle=0.85, steer=0.08)  # eyes only, never engages
                 continue
 
             fire = set()
-            steer = 0.02                                        # a slow drift, not a turn
+            steer = 0.02  # a slow drift, not a turn
             if p.contacts:
                 target = min(p.contacts, key=lambda c: c.range)
                 bearing = target.bearing_deg

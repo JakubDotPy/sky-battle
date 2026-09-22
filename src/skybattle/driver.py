@@ -30,8 +30,13 @@ under 10 KB, so this is generous -- it exists to catch a plausible author bug (e
 
 
 class BotProcess:
-    def __init__(self, bot_path: str | Path, tick_deadline: float = 0.05,
-                 first_tick_deadline: float = 2.0, strike_limit: int = 3) -> None:
+    def __init__(
+        self,
+        bot_path: str | Path,
+        tick_deadline: float = 0.05,
+        first_tick_deadline: float = 2.0,
+        strike_limit: int = 3,
+    ) -> None:
         self.bot_path = Path(bot_path)
         self.tick_deadline = tick_deadline
         self.first_tick_deadline = first_tick_deadline
@@ -48,8 +53,11 @@ class BotProcess:
 
         self.proc = subprocess.Popen(
             [sys.executable, "-u", "-m", "skybattle.runner", str(self.bot_path)],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            text=True, bufsize=1,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
             # Kill the whole group later: a bot that spawned helpers must leave no orphans.
             start_new_session=True,
         )
@@ -98,7 +106,7 @@ class BotProcess:
             except json.JSONDecodeError:
                 return self._strike("error")
             if payload.get("tick") != view.tick:
-                continue                      # a late answer to an earlier tick: discard it
+                continue  # a late answer to an earlier tick: discard it
             if "error" in payload:
                 return self._strike("error")
             try:
@@ -119,9 +127,7 @@ class BotProcess:
         """
         self.strikes += 1
         self.consecutive += 1
-        if self.consecutive >= self.strike_limit or (
-            self.ticks >= 50 and self.strikes > self.ticks * 0.02
-        ):
+        if self.consecutive >= self.strike_limit or (self.ticks >= 50 and self.strikes > self.ticks * 0.02):
             # A chronically slow bot never lands an action at all -- every tick times out and
             # its late reply is then dropped as stale -- so it would hold tick 0's action for
             # the whole match while looking as though it played. Forfeit it instead.

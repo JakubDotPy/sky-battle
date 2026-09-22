@@ -51,7 +51,8 @@ def _module_assign(bot_path: Path, name: str) -> ast.expr | None:
         raise ValueError(f"{bot_path}: cannot read bot file: {exc}") from exc
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(
-                isinstance(t, ast.Name) and t.id == name for t in node.targets):
+            isinstance(t, ast.Name) and t.id == name for t in node.targets
+        ):
             return node.value
     return None
 
@@ -66,12 +67,13 @@ def read_squadron(bot_path: Path) -> list[str] | None:
     value = _module_assign(bot_path, "SQUADRON")
     if value is None:
         return None
-    if (isinstance(value, ast.List)
-            and all(isinstance(e, ast.Constant) and isinstance(e.value, str)
-                    for e in value.elts)):
+    if isinstance(value, ast.List) and all(
+        isinstance(e, ast.Constant) and isinstance(e.value, str) for e in value.elts
+    ):
         return [e.value for e in value.elts]
-    raise ValueError(f"{bot_path}: SQUADRON must be a list of string literals, "
-                     f"e.g. SQUADRON = [\"scout\", \"fighter\"]")
+    raise ValueError(
+        f'{bot_path}: SQUADRON must be a list of string literals, e.g. SQUADRON = ["scout", "fighter"]'
+    )
 
 
 def read_api_version(bot_path: Path) -> int | None:
@@ -85,11 +87,9 @@ def read_api_version(bot_path: Path) -> int | None:
     value = _module_assign(bot_path, "API_VERSION")
     if value is None:
         return None
-    if isinstance(value, ast.Constant) and isinstance(value.value, int) \
-            and not isinstance(value.value, bool):
+    if isinstance(value, ast.Constant) and isinstance(value.value, int) and not isinstance(value.value, bool):
         return value.value
-    raise ValueError(f"{bot_path}: API_VERSION must be an integer literal, "
-                     f"e.g. API_VERSION = {API_VERSION}")
+    raise ValueError(f"{bot_path}: API_VERSION must be an integer literal, e.g. API_VERSION = {API_VERSION}")
 
 
 def check_api_version(bot_path: Path) -> None:
@@ -152,24 +152,35 @@ def load_game(path: str | Path) -> Game:
 
         squadron = read_squadron(bot_path)
         if squadron is None:
-            raise ValueError(f"{bot_path}: no module-level SQUADRON declaration found, e.g. "
-                             f"SQUADRON = [\"scout\", \"fighter\"]")
+            raise ValueError(
+                f"{bot_path}: no module-level SQUADRON declaration found, e.g. "
+                f'SQUADRON = ["scout", "fighter"]'
+            )
         check_api_version(bot_path)
         check_squadron(bot_path, squadron, classes, planes_per_player)
         players.append(Player(name=name, bot=bot_path, squadron=squadron))
 
-    return Game(rounds=rounds, ticks_per_round=ticks_per_round,
-               planes_per_player=planes_per_player, arena=arena, seed=seed,
-               deadline=deadline, players=players)
+    return Game(
+        rounds=rounds,
+        ticks_per_round=ticks_per_round,
+        planes_per_player=planes_per_player,
+        arena=arena,
+        seed=seed,
+        deadline=deadline,
+        players=players,
+    )
 
 
-def check_squadron(bot_path: Path, squadron: list[str], classes: dict[str, PlaneClass],
-                   planes_per_player: int) -> None:
+def check_squadron(
+    bot_path: Path, squadron: list[str], classes: dict[str, PlaneClass], planes_per_player: int
+) -> None:
     """Shared by `load_game` (hard requirement) and `duel` (only when SQUADRON is present)."""
     for kind in squadron:
         if kind not in classes:
-            raise ValueError(f"{bot_path}: unknown plane kind {kind!r} in SQUADRON; "
-                             f"valid kinds are {sorted(classes)}")
+            raise ValueError(
+                f"{bot_path}: unknown plane kind {kind!r} in SQUADRON; valid kinds are {sorted(classes)}"
+            )
     if len(squadron) != planes_per_player:
-        raise ValueError(f"{bot_path}: SQUADRON has {len(squadron)} planes, expected "
-                         f"planes_per_player={planes_per_player}")
+        raise ValueError(
+            f"{bot_path}: SQUADRON has {len(squadron)} planes, expected planes_per_player={planes_per_player}"
+        )

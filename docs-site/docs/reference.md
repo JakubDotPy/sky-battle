@@ -53,10 +53,10 @@ practice.
 ```python
 @dataclass(frozen=True, kw_only=True)
 class Action:
-    throttle: float = 0.0          # [0, 1] lever position -> thrust ceiling, not a target speed
-    steer: float = 0.0             # [-1, +1]; positive = left (CCW); costs speed proportional
-                                    # to how hard you actually turned
-    fire: frozenset[int] = frozenset()   # gun indices to fire this tick; empty = hold fire
+    throttle: float = 0.0  # [0, 1] lever position -> thrust ceiling, not a target speed
+    steer: float = 0.0  # [-1, +1]; positive = left (CCW); costs speed proportional
+    # to how hard you actually turned
+    fire: frozenset[int] = frozenset()  # gun indices to fire this tick; empty = hold fire
 ```
 
 `Action` is keyword-only and frozen, so a bot returns exactly `dict[plane_id, Action]` — a
@@ -76,16 +76,16 @@ class Gun(NamedTuple):
 
 
 class Contact(NamedTuple):
-    id: int                    # stable only while continuously visible
-    kind: str                  # "scout" | "fighter" | "bomber"
-    x: float                   # absolute
+    id: int  # stable only while continuously visible
+    kind: str  # "scout" | "fighter" | "bomber"
+    x: float  # absolute
     y: float
-    heading_deg: float         # absolute
+    heading_deg: float  # absolute
     speed: float
-    hp: int                    # visible battle damage; no ammo, no cooldown
-    bearing_deg: float         # relative to the reading plane's nose, (-180, 180]
+    hp: int  # visible battle damage; no ammo, no cooldown
+    bearing_deg: float  # relative to the reading plane's nose, (-180, 180]
     range: float
-    seen_by: tuple[int, ...]   # which of YOUR planes currently sees it
+    seen_by: tuple[int, ...]  # which of YOUR planes currently sees it
 
 
 class OwnPlane(NamedTuple):
@@ -93,8 +93,8 @@ class OwnPlane(NamedTuple):
     kind: str
     x: float
     y: float
-    heading_deg: float         # absolute, 0 = east, CCW positive
-    speed: float                # units/tick
+    heading_deg: float  # absolute, 0 = east, CCW positive
+    speed: float  # units/tick
     hp: int
     hp_max: int
     stall_speed: float
@@ -109,7 +109,7 @@ class View(NamedTuple):
     tick: int
     arena: tuple[float, float]
     planes: tuple[OwnPlane, ...]
-    events: tuple[object, ...]   # one of the five event types below
+    events: tuple[object, ...]  # one of the five event types below
     rng: random.Random | None = None
 ```
 
@@ -124,18 +124,22 @@ class HitByBullet(NamedTuple):
     from_squadron: int
     damage: int
 
+
 class BulletHit(NamedTuple):
     plane_id: int
     gun: int
     target_id: int
     damage: int
 
+
 class PlaneDestroyed(NamedTuple):
     plane_id: int
-    by: int | None          # None if killed by the inactivity drain
+    by: int | None  # None if killed by the inactivity drain
+
 
 class ContactLost(NamedTuple):
     contact_id: int
+
 
 class ActionRejected(NamedTuple):
     plane_id: int

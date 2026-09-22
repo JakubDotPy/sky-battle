@@ -54,10 +54,15 @@ class World:
     load-bearing, not optional.
     """
 
-    def __init__(self, arena: tuple[float, float], squadrons: list[list[str]],
-                 classes: dict[str, PlaneClass], seed: int,
-                 round_tick_limit: int = ROUND_TICK_LIMIT,
-                 inactivity_ticks: int = INACTIVITY_TICKS) -> None:
+    def __init__(
+        self,
+        arena: tuple[float, float],
+        squadrons: list[list[str]],
+        classes: dict[str, PlaneClass],
+        seed: int,
+        round_tick_limit: int = ROUND_TICK_LIMIT,
+        inactivity_ticks: int = INACTIVITY_TICKS,
+    ) -> None:
         self.arena = arena
         self.classes = classes
         self.seed = seed
@@ -85,8 +90,7 @@ class World:
         """
         self.kills_while_alive: dict[int, int] = {sq: 0 for sq in range(len(squadrons))}
         self._events: dict[int, list[object]] = {sq: [] for sq in range(len(squadrons))}
-        self._squadron_rng = {sq: random.Random(self.squadron_seed(sq))
-                              for sq in range(len(squadrons))}
+        self._squadron_rng = {sq: random.Random(self.squadron_seed(sq)) for sq in range(len(squadrons))}
         """Each squadron's bot RNG, created ONCE and handed out by reference every tick.
 
         The stream then advances only as far as a bot actually draws from it, so two bots that
@@ -128,8 +132,12 @@ class World:
                 ox = geom.cos_deg(tangent) * slot * 150.0
                 oy = geom.sin_deg(tangent) * slot * 150.0
                 self.planes[next_id] = Plane(
-                    id=next_id, squadron=sq, kind=kind, cls=cls,
-                    x=(cx + ox) % w, y=(cy + oy) % h,
+                    id=next_id,
+                    squadron=sq,
+                    kind=kind,
+                    cls=cls,
+                    x=(cx + ox) % w,
+                    y=(cy + oy) % h,
                     heading_deg=geom.normalize_deg(base + 180.0),
                     speed=cls.corner_speed,
                     hp=cls.hp,
@@ -165,8 +173,7 @@ class World:
         """Validate every squadron's reply, degrading per plane."""
         actions: dict[int, Action] = {}
         for sq, raw in replies.items():
-            live = tuple(sorted(p.id for p in self.planes.values()
-                                if p.alive and p.squadron == sq))
+            live = tuple(sorted(p.id for p in self.planes.values() if p.alive and p.squadron == sq))
             accepted, rejects = validate(raw, live)
             actions.update(accepted)
             for pid, reason in rejects:
@@ -175,14 +182,14 @@ class World:
         return actions
 
     def _integrate(self, actions: dict[int, Action]) -> None:
-        for pid in sorted(self.planes):          # fixed order: never a dict-order dependency
+        for pid in sorted(self.planes):  # fixed order: never a dict-order dependency
             p = self.planes[pid]
             if not p.alive:
                 continue
             a = actions.get(pid, Action())
             p.x, p.y, p.heading_deg, p.speed = flight.step(
-                p.cls, p.x, p.y, p.heading_deg, p.speed, p.hp, p.cls.hp,
-                a.throttle, a.steer, self.arena)
+                p.cls, p.x, p.y, p.heading_deg, p.speed, p.hp, p.cls.hp, a.throttle, a.steer, self.arena
+            )
             for i in range(len(p.cooldown)):
                 p.cooldown[i] = max(0, p.cooldown[i] - 1)
 
@@ -196,14 +203,14 @@ class World:
                 continue
             for gi in sorted(a.fire):
                 if gi < 0 or gi >= len(p.cls.guns):
-                    self._events[p.squadron].append(
-                        ActionRejected(plane_id=pid, reason=f"unknown_gun:{gi}"))
+                    self._events[p.squadron].append(ActionRejected(plane_id=pid, reason=f"unknown_gun:{gi}"))
                     continue
                 if p.cooldown[gi] > 0 or p.ammo[gi] <= 0:
                     continue
                 gun = p.cls.guns[gi]
-                self.bullets.append(bul.spawn(gun, gi, pid, p.squadron,
-                                              p.x, p.y, p.heading_deg, p.speed, self.rng))
+                self.bullets.append(
+                    bul.spawn(gun, gi, pid, p.squadron, p.x, p.y, p.heading_deg, p.speed, self.rng)
+                )
                 p.ammo[gi] -= 1
                 p.cooldown[gi] = gun.cooldown_ticks
 
@@ -237,8 +244,7 @@ class World:
                 p = self.planes[pid]
                 if not p.alive or p.squadron == b.squadron:
                     continue
-                t = collide.swept_hit(p.x, p.y, p.cls.radius,
-                                      b.x, b.y, dx, dy, w, h)
+                t = collide.swept_hit(p.x, p.y, p.cls.radius, b.x, b.y, dx, dy, w, h)
                 if t is not None and (best is None or t < best[0]):
                     best = (t, p)
             if best is not None:
@@ -259,9 +265,11 @@ class World:
             self.ticks_since_damage = 0
             self.won_by_drain = False
             self._events[b.squadron].append(
-                BulletHit(plane_id=b.owner_id, gun=b.gun, target_id=target.id, damage=b.damage))
+                BulletHit(plane_id=b.owner_id, gun=b.gun, target_id=target.id, damage=b.damage)
+            )
             self._events[target.squadron].append(
-                HitByBullet(plane_id=target.id, from_squadron=b.squadron, damage=b.damage))
+                HitByBullet(plane_id=target.id, from_squadron=b.squadron, damage=b.damage)
+            )
             if target.hp <= 0:
                 self._kill(target, by=b.squadron)
 
@@ -337,8 +345,7 @@ class World:
             for victim in self.kills[sq]:
                 score += 0.2 * self._damage_ledger.get((sq, victim), 0.0)
             if sq == last_standing:
-                enemy_dead = sum(1 for p in self.planes.values()
-                                  if not p.alive and p.squadron != sq)
+                enemy_dead = sum(1 for p in self.planes.values() if not p.alive and p.squadron != sq)
                 score += 10.0 * enemy_dead
             out[sq] = score
         return out
@@ -374,8 +381,7 @@ class World:
                 tick=self.tick_no,
                 arena=self.arena,
                 planes=tuple(
-                    self._own(p, vision.build_contacts(p, seen_t, enemies, ids, self.arena))
-                    for p in mine
+                    self._own(p, vision.build_contacts(p, seen_t, enemies, ids, self.arena)) for p in mine
                 ),
                 events=tuple(events),
                 rng=self._squadron_rng[sq],
@@ -387,15 +393,28 @@ class World:
     @staticmethod
     def _own(p: Plane, contacts: tuple[Contact, ...]) -> OwnPlane:
         return OwnPlane(
-            id=p.id, kind=p.kind, x=p.x, y=p.y, heading_deg=p.heading_deg, speed=p.speed,
-            hp=p.hp, hp_max=p.cls.hp,
-            stall_speed=p.cls.stall_speed, corner_speed=p.cls.corner_speed,
+            id=p.id,
+            kind=p.kind,
+            x=p.x,
+            y=p.y,
+            heading_deg=p.heading_deg,
+            speed=p.speed,
+            hp=p.hp,
+            hp_max=p.cls.hp,
+            stall_speed=p.cls.stall_speed,
+            corner_speed=p.cls.corner_speed,
             max_speed=p.cls.max_speed,
-            guns=tuple(Gun(name=g.name, bearing_deg=g.bearing_deg,
-                           dispersion_deg=g.dispersion_deg,
-                           ammo=p.ammo[i], cooldown_ticks_left=p.cooldown[i],
-                           muzzle_speed=g.muzzle_speed)
-                       for i, g in enumerate(p.cls.guns)),
+            guns=tuple(
+                Gun(
+                    name=g.name,
+                    bearing_deg=g.bearing_deg,
+                    dispersion_deg=g.dispersion_deg,
+                    ammo=p.ammo[i],
+                    cooldown_ticks_left=p.cooldown[i],
+                    muzzle_speed=g.muzzle_speed,
+                )
+                for i, g in enumerate(p.cls.guns)
+            ),
             contacts=contacts,
             bubble_range=p.cls.bubble_range,
         )

@@ -11,8 +11,21 @@ BOTS = Path(__file__).parent / "bots"
 
 def _line(tick=1):
     g = Gun(name="forward", bearing_deg=0.0, dispersion_deg=8.0, ammo=80, cooldown_ticks_left=0)
-    p = OwnPlane(id=0, kind="scout", x=0.0, y=0.0, heading_deg=0.0, speed=5.0, hp=70, hp_max=70,
-                 stall_speed=3.0, corner_speed=5.0, max_speed=9.0, guns=(g,), contacts=())
+    p = OwnPlane(
+        id=0,
+        kind="scout",
+        x=0.0,
+        y=0.0,
+        heading_deg=0.0,
+        speed=5.0,
+        hp=70,
+        hp_max=70,
+        stall_speed=3.0,
+        corner_speed=5.0,
+        max_speed=9.0,
+        guns=(g,),
+        contacts=(),
+    )
     view = View(tick=tick, arena=(2000.0, 2000.0), planes=(p,), events=())
     return json.dumps(protocol.encode_view(view, rng_seed=1)) + "\n"
 
@@ -21,7 +34,10 @@ def _run(bot, ticks=2, timeout=20):
     proc = subprocess.run(
         [sys.executable, "-u", "-m", "skybattle.runner", str(BOTS / bot)],
         input="".join(_line(t) for t in range(1, ticks + 1)),
-        capture_output=True, text=True, timeout=timeout, check=False,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=False,
     )
     replies = [json.loads(x) for x in proc.stdout.splitlines() if x.strip()]
     return replies, proc.stderr
@@ -64,7 +80,11 @@ def test_a_plain_act_function_works_as_well_as_a_bot_class():
 def test_a_missing_bot_file_fails_loudly_rather_than_silently():
     proc = subprocess.run(
         [sys.executable, "-u", "-m", "skybattle.runner", str(BOTS / "nope.py")],
-        input=_line(), capture_output=True, text=True, timeout=20, check=False,
+        input=_line(),
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
     )
     assert proc.returncode != 0
     assert "nope.py" in proc.stderr

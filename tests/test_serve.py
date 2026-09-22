@@ -39,8 +39,7 @@ def replay_dir(tmp_path_factory):
     _ensure_placeholder_viewer_files()
     d = tmp_path_factory.mktemp("replay")
     classes = load_classes(arena=ARENA)
-    run_round([BOTS / "good.py", BOTS / "good.py"], SQ, seed=1, arena=ARENA,
-              classes=classes, replay_dir=d)
+    run_round([BOTS / "good.py", BOTS / "good.py"], SQ, seed=1, arena=ARENA, classes=classes, replay_dir=d)
     return d
 
 
@@ -102,11 +101,14 @@ def test_replay_route_serves_native_gzip(server_url, replay_dir):
     assert len(lines) - 1 == len(expected_ticks)  # header line + one per tick
 
 
-@pytest.mark.parametrize("suffix", [
-    "../../etc/passwd",
-    "..%2f..%2fetc%2fpasswd",
-    "/etc/passwd",
-])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "../../etc/passwd",
+        "..%2f..%2fetc%2fpasswd",
+        "/etc/passwd",
+    ],
+)
 def test_replay_path_traversal_is_refused(server_url, suffix):
     """403 specifically: these must reach the containment check in `_serve_replay`, not just
     fail to match any route (which would 404 regardless of whether containment works)."""

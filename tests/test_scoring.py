@@ -60,8 +60,8 @@ def test_scores_pays_no_survival_bonus_without_kills_while_alive():
     w = _w()
     a, b = min(w.planes), max(w.planes)
     sq_a = w.planes[a].squadron
-    w.kills[sq_a].append(b)          # a kill is on the books...
-    w.kills_while_alive[sq_a] = 0    # ...but not one made while the killer's squadron lived
+    w.kills[sq_a].append(b)  # a kill is on the books...
+    w.kills_while_alive[sq_a] = 0  # ...but not one made while the killer's squadron lived
     assert w.scores()[sq_a] == pytest.approx(0.0)
 
 
@@ -70,8 +70,8 @@ def test_the_last_standing_bonus_counts_only_enemy_losses():
     w = World(ARENA, [["fighter", "fighter"], ["fighter"]], CLASSES, seed=7)
     mine = sorted(p.id for p in w.planes.values() if p.squadron == 0)
     enemy = next(p.id for p in w.planes.values() if p.squadron == 1)
-    w.planes[mine[1]].alive = False      # one of my own is lost
-    w.planes[enemy].alive = False        # and the single enemy is destroyed
+    w.planes[mine[1]].alive = False  # one of my own is lost
+    w.planes[enemy].alive = False  # and the single enemy is destroyed
     # squadron 0 is last standing with one enemy dead: exactly one 10-point bonus
     assert w.scores()[0] == pytest.approx(10.0)
 
@@ -212,7 +212,7 @@ def test_a_posthumous_kill_earns_no_survival_bonus():
     sq_a, sq_b = w.planes[a].squadron, w.planes[b].squadron
     w.tick({sq_a: {a: Action(fire=frozenset({0}))}, sq_b: {b: Action()}})
     assert not w.planes[b].alive
-    assert w.kills_while_alive[sq_a] == 1        # shooter was alive, so it counts
+    assert w.kills_while_alive[sq_a] == 1  # shooter was alive, so it counts
 
     w2 = _w()
     c, d = min(w2.planes), max(w2.planes)
@@ -225,4 +225,4 @@ def test_a_posthumous_kill_earns_no_survival_bonus():
     for p in w2.planes.values():
         if p.squadron == sq_c:
             p.alive = False
-    assert w2.kills_while_alive[sq_c] == 1       # counted at kill time, not at scoring time
+    assert w2.kills_while_alive[sq_c] == 1  # counted at kill time, not at scoring time

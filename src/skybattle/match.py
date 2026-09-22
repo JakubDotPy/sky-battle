@@ -29,12 +29,18 @@ class MatchResult(NamedTuple):
     winner: int | None
 
 
-def run_round(bot_paths: list[str | Path], squadrons: list[list[str]], seed: int,
-              arena: tuple[float, float], classes: dict[str, PlaneClass] | None = None,
-              table_path: str | Path | None = None,
-              replay_dir: str | Path | None = None, deadline: float = 0.05,
-              round_index: int = 1,
-              round_tick_limit: int = World.ROUND_TICK_LIMIT) -> RoundResult:
+def run_round(
+    bot_paths: list[str | Path],
+    squadrons: list[list[str]],
+    seed: int,
+    arena: tuple[float, float],
+    classes: dict[str, PlaneClass] | None = None,
+    table_path: str | Path | None = None,
+    replay_dir: str | Path | None = None,
+    deadline: float = 0.05,
+    round_index: int = 1,
+    round_tick_limit: int = World.ROUND_TICK_LIMIT,
+) -> RoundResult:
     table_path = Path(table_path) if table_path is not None else None
     classes = classes or load_classes(table_path)
     world = World(arena, squadrons, classes, seed=seed, round_tick_limit=round_tick_limit)
@@ -81,12 +87,11 @@ def run_round(bot_paths: list[str | Path], squadrons: list[list[str]], seed: int
                 w.close()
 
 
-def run_match(bot_paths: list[str | Path], squadrons: list[list[str]], seed: int,
-              rounds: int = 11, **kw) -> MatchResult:
-    results = [run_round(bot_paths, squadrons, seed=seed + i, round_index=i + 1, **kw)
-               for i in range(rounds)]
+def run_match(
+    bot_paths: list[str | Path], squadrons: list[list[str]], seed: int, rounds: int = 11, **kw
+) -> MatchResult:
+    results = [run_round(bot_paths, squadrons, seed=seed + i, round_index=i + 1, **kw) for i in range(rounds)]
     totals = {sq: sum(r.scores[sq] for r in results) for sq in results[0].scores}
     best = max(totals.values())
     leaders = [sq for sq, v in totals.items() if v == best]
-    return MatchResult(rounds=results, totals=totals,
-                       winner=leaders[0] if len(leaders) == 1 else None)
+    return MatchResult(rounds=results, totals=totals, winner=leaders[0] if len(leaders) == 1 else None)

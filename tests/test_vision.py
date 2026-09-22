@@ -100,8 +100,8 @@ def test_contacts_carry_both_frames_and_are_quantised():
     c = out[0]
     assert c.id == 3
     assert c.hp == 88
-    assert c.x == 400.0                                  # absolute frame
-    assert c.bearing_deg == pytest.approx(0.0)           # relative frame
+    assert c.x == 400.0  # absolute frame
+    assert c.bearing_deg == pytest.approx(0.0)  # relative frame
     assert c.range == pytest.approx(300.0)
     assert c.seen_by == (0,)
     assert c.bearing_deg == round(c.bearing_deg, vision.QUANT_ANGLE)
@@ -117,7 +117,7 @@ def test_an_enemy_astern_and_close_is_seen_by_the_bubble_not_the_cone():
     """Fighter has no rear cone, so a target dead astern can only be caught by the bubble."""
     cls = CLASSES["fighter"]
     o = _p(kind="fighter", id=0, x=1000.0, y=1000.0, heading_deg=0.0)
-    close = _p(id=1, x=1000.0 - 30.0, y=1000.0, heading_deg=0.0)      # 30u astern, inside bubble
+    close = _p(id=1, x=1000.0 - 30.0, y=1000.0, heading_deg=0.0)  # 30u astern, inside bubble
     far = _p(id=1, x=1000.0 - (cls.bubble_range + 20.0), y=1000.0, heading_deg=0.0)  # just outside
 
     assert vision.sees(o, close, ARENA)
@@ -126,11 +126,11 @@ def test_an_enemy_astern_and_close_is_seen_by_the_bubble_not_the_cone():
 
 def test_the_bubble_sees_across_the_torus_seam():
     """Target sits 20u away across the seam, off-axis so the forward cone cannot be the cause."""
-    o = _p(kind="fighter", id=0, x=10.0, y=1000.0, heading_deg=90.0)   # facing north
-    t = _p(id=1, x=1990.0, y=1000.0, heading_deg=0.0)                  # 20u west, wrapped
+    o = _p(kind="fighter", id=0, x=10.0, y=1000.0, heading_deg=90.0)  # facing north
+    t = _p(id=1, x=1990.0, y=1000.0, heading_deg=0.0)  # 20u west, wrapped
 
     naive = ((t.x - o.x) ** 2 + (t.y - o.y) ** 2) ** 0.5
-    assert naive > 1000.0            # the un-wrapped straight-line distance is nowhere close
+    assert naive > 1000.0  # the un-wrapped straight-line distance is nowhere close
     assert geom.distance(o.x, o.y, t.x, t.y, W, H) == pytest.approx(20.0)  # wrapped, it is 20u
     assert vision.sees(o, t, ARENA)
 
@@ -152,10 +152,10 @@ def test_the_bubble_decision_is_quantised_like_in_cones():
     t = _p(id=1, x=1000.0 - (cls.bubble_range + 0.04), y=1000.0, heading_deg=0.0)
 
     raw = geom.distance(o.x, o.y, t.x, t.y, W, H)
-    assert raw > cls.bubble_range                                     # genuinely outside, unrounded
-    assert round(raw, vision.QUANT_RANGE) <= cls.bubble_range          # but rounds back inside
+    assert raw > cls.bubble_range  # genuinely outside, unrounded
+    assert round(raw, vision.QUANT_RANGE) <= cls.bubble_range  # but rounds back inside
 
-    assert vision.sees(o, t, ARENA)                                    # the rounded decision wins
+    assert vision.sees(o, t, ARENA)  # the rounded decision wins
 
 
 def test_the_range_round_admits_a_target_the_raw_distance_would_exclude():
@@ -173,10 +173,10 @@ def test_the_range_round_admits_a_target_the_raw_distance_would_exclude():
     t = _p(id=1, x=100.0 + cls.cone_range + 0.04, y=100.0, heading_deg=0.0)
 
     raw = geom.distance(o.x, o.y, t.x, t.y, W, H)
-    assert raw > cls.cone_range                                    # genuinely outside, unrounded
-    assert round(raw, vision.QUANT_RANGE) <= cls.cone_range         # but rounds back inside
+    assert raw > cls.cone_range  # genuinely outside, unrounded
+    assert round(raw, vision.QUANT_RANGE) <= cls.cone_range  # but rounds back inside
 
-    assert vision.sees(o, t, ARENA)                                 # the rounded decision wins
+    assert vision.sees(o, t, ARENA)  # the rounded decision wins
 
 
 def test_visibility_decision_uses_the_same_rounding_as_the_reported_values():

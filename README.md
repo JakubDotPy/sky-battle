@@ -43,7 +43,7 @@ One file. No I/O — the engine owns that, so `print()` is free for debugging an
 ```python
 from skybattle.state import Action
 
-SQUADRON = ["scout", "fighter"]      # your loadout, your choice
+SQUADRON = ["scout", "fighter"]  # your loadout, your choice
 
 
 class Bot:
@@ -51,12 +51,12 @@ class Bot:
         out = {}
         for plane in state.planes:
             if not plane.contacts:
-                out[plane.id] = Action(throttle=0.85, steer=0.06)     # sweep and search
+                out[plane.id] = Action(throttle=0.85, steer=0.06)  # sweep and search
                 continue
             target = min(plane.contacts, key=lambda c: c.range)
             out[plane.id] = Action(
                 throttle=0.9,
-                steer=max(min(target.bearing_deg / 25.0, 1.0), -1.0), # bearing and steer
+                steer=max(min(target.bearing_deg / 25.0, 1.0), -1.0),  # bearing and steer
                 fire=frozenset({0}) if abs(target.bearing_deg) < 6 else frozenset(),
             )
         return out

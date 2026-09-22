@@ -21,7 +21,7 @@ class Bot:
             ready = gun.cooldown_ticks_left == 0 and gun.ammo > 0
             aimed = any(abs(c.bearing_deg) <= ON_TARGET_DEG for c in p.contacts)
             out[p.id] = Action(
-                throttle=0.0,                          # lever idle: settles at stall speed
+                throttle=0.0,  # lever idle: settles at stall speed
                 steer=1.0,
                 fire=frozenset({0}) if ready and aimed else frozenset(),
             )

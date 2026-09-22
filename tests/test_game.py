@@ -16,10 +16,13 @@ def _write(path, content):
 
 # ------------------------------------------------------------------ defaults / path resolution
 
+
 def test_defaults_are_applied_when_fields_are_omitted(tmp_path):
     (tmp_path / "bot_a.py").write_text('SQUADRON = ["scout", "fighter"]\n')
     (tmp_path / "bot_b.py").write_text('SQUADRON = ["scout", "fighter"]\n')
-    game_file = _write(tmp_path / "game.toml", """
+    game_file = _write(
+        tmp_path / "game.toml",
+        """
 [[players]]
 name = "a"
 bot  = "bot_a.py"
@@ -27,7 +30,8 @@ bot  = "bot_a.py"
 [[players]]
 name = "b"
 bot  = "bot_b.py"
-""")
+""",
+    )
     game = load_game(game_file)
     assert game.rounds == 11
     assert game.ticks_per_round == 3000
@@ -47,7 +51,9 @@ def test_bot_paths_resolve_relative_to_the_game_file_not_cwd(tmp_path):
     bot_dir = game_dir / "bots"
     bot_dir.mkdir()
     (bot_dir / "mybot.py").write_text('SQUADRON = ["scout", "fighter"]\n')
-    game_file = _write(game_dir / "game.toml", """
+    game_file = _write(
+        game_dir / "game.toml",
+        """
 [[players]]
 name = "a"
 bot  = "bots/mybot.py"
@@ -55,12 +61,14 @@ bot  = "bots/mybot.py"
 [[players]]
 name = "b"
 bot  = "bots/mybot.py"
-""")
+""",
+    )
     game = load_game(game_file)
     assert game.players[0].bot == (bot_dir / "mybot.py").resolve()
 
 
 # ------------------------------------------------------------------ validation failures
+
 
 def test_a_malformed_toml_file_is_rejected_naming_the_file(tmp_path):
     """tomllib.TOMLDecodeError IS a ValueError, so a bare `pytest.raises(ValueError)` would
@@ -89,7 +97,9 @@ def test_an_arena_too_small_for_the_widest_cone_is_rejected(tmp_path):
     """The scout's 900-unit cone exceeds half of 1400, same as load_classes(arena=...) already
     enforces for `duel` -- a game file must get that check too, up front."""
     (tmp_path / "bot.py").write_text('SQUADRON = ["scout", "fighter"]\n')
-    game_file = _write(tmp_path / "game.toml", """
+    game_file = _write(
+        tmp_path / "game.toml",
+        """
 [game]
 arena = [2000, 1400]
 
@@ -100,14 +110,14 @@ bot  = "bot.py"
 [[players]]
 name = "b"
 bot  = "bot.py"
-""")
+""",
+    )
     with pytest.raises(ValueError, match="cone_range"):
         load_game(game_file)
 
 
 def test_a_player_with_a_missing_bot_path_is_rejected(tmp_path):
-    game_file = _write(tmp_path / "game.toml",
-                       '[[players]]\nname = "a"\nbot = "does_not_exist.py"\n')
+    game_file = _write(tmp_path / "game.toml", '[[players]]\nname = "a"\nbot = "does_not_exist.py"\n')
     with pytest.raises(ValueError, match="bot not found"):
         load_game(game_file)
 
@@ -121,8 +131,9 @@ def test_a_bot_without_squadron_is_rejected_naming_the_bot_file(tmp_path):
 
 
 def test_a_squadron_with_a_non_string_literal_is_rejected(tmp_path):
-    game_file = _write(tmp_path / "game.toml",
-                       f'[[players]]\nname = "a"\nbot = "{BOTS / "bad_squadron_type.py"}"\n')
+    game_file = _write(
+        tmp_path / "game.toml", f'[[players]]\nname = "a"\nbot = "{BOTS / "bad_squadron_type.py"}"\n'
+    )
     with pytest.raises(ValueError, match="string literals"):
         load_game(game_file)
 
@@ -130,34 +141,39 @@ def test_a_squadron_with_a_non_string_literal_is_rejected(tmp_path):
 def test_a_squadron_kind_not_in_the_class_table_is_rejected_listing_valid_kinds(tmp_path):
     """bad_kind.py's SQUADRON is ["scout", "zeppelin"] -- length 2, matching the default
     planes_per_player, so only the kind check can fire, not the length check."""
-    game_file = _write(tmp_path / "game.toml",
-                       f'[[players]]\nname = "a"\nbot = "{BOTS / "bad_kind.py"}"\n')
+    game_file = _write(tmp_path / "game.toml", f'[[players]]\nname = "a"\nbot = "{BOTS / "bad_kind.py"}"\n')
     with pytest.raises(ValueError, match="zeppelin") as excinfo:
         load_game(game_file)
-    assert "bomber" in str(excinfo.value) and "fighter" in str(excinfo.value) and (
-        "scout" in str(excinfo.value)
+    assert (
+        "bomber" in str(excinfo.value) and "fighter" in str(excinfo.value) and ("scout" in str(excinfo.value))
     )
 
 
 def test_a_squadron_length_mismatched_with_planes_per_player_is_rejected(tmp_path):
     """good_scout_fighter.py declares two VALID kinds, so with planes_per_player=3 only the
     length check can fire, not the kind check."""
-    game_file = _write(tmp_path / "game.toml", f"""
+    game_file = _write(
+        tmp_path / "game.toml",
+        f"""
 [game]
 planes_per_player = 3
 
 [[players]]
 name = "a"
 bot  = "{BOTS / "good_scout_fighter.py"}"
-""")
+""",
+    )
     with pytest.raises(ValueError, match=r"has 2 planes, expected planes_per_player=3"):
         load_game(game_file)
 
 
 # ------------------------------------------------------------------ end to end
 
+
 def _three_player_game_file(tmp_path, ticks_per_round=5, rounds=1):
-    return _write(tmp_path / "game.toml", f"""
+    return _write(
+        tmp_path / "game.toml",
+        f"""
 [game]
 rounds            = {rounds}
 ticks_per_round   = {ticks_per_round}
@@ -176,7 +192,8 @@ bot  = "{BOTS / "good_fighter_bomber.py"}"
 [[players]]
 name = "petr"
 bot  = "{BOTS / "good_bomber_scout.py"}"
-""")
+""",
+    )
 
 
 def test_a_three_player_game_file_loads_and_runs_a_short_match(tmp_path):
@@ -184,15 +201,24 @@ def test_a_three_player_game_file_loads_and_runs_a_short_match(tmp_path):
     game = load_game(game_file)
     assert [p.name for p in game.players] == ["jakub", "anna", "petr"]
     assert [p.squadron for p in game.players] == [
-        ["scout", "fighter"], ["fighter", "bomber"], ["bomber", "scout"],
+        ["scout", "fighter"],
+        ["fighter", "bomber"],
+        ["bomber", "scout"],
     ]
 
     from skybattle.classes import load_classes
+
     squadrons = [p.squadron for p in game.players]
-    result = run_match([p.bot for p in game.players], squadrons, seed=game.seed,
-                       rounds=game.rounds, arena=game.arena,
-                       classes=load_classes(arena=game.arena), deadline=game.deadline,
-                       round_tick_limit=game.ticks_per_round)
+    result = run_match(
+        [p.bot for p in game.players],
+        squadrons,
+        seed=game.seed,
+        rounds=game.rounds,
+        arena=game.arena,
+        classes=load_classes(arena=game.arena),
+        deadline=game.deadline,
+        round_tick_limit=game.ticks_per_round,
+    )
     assert sorted(result.totals) == [0, 1, 2]
     # good_*.py bots never fire, so with only 5 ticks the round can only end by hitting the
     # tick limit -- this is the "ticks_per_round actually shortens a round" check.
@@ -224,6 +250,7 @@ def test_a_bot_declaring_an_unknown_api_version_is_refused(tmp_path):
 
 def test_a_bot_declaring_the_current_api_version_is_accepted(tmp_path):
     from skybattle.state import API_VERSION
+
     bot = tmp_path / "ok.py"
     bot.write_text(f'SQUADRON = ["scout", "fighter"]\nAPI_VERSION = {API_VERSION}\n')
     game = tmp_path / "game.toml"

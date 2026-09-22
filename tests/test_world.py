@@ -101,12 +101,10 @@ def test_a_kill_is_credited_to_the_round_that_struck_first_not_the_one_fired_fir
     # round's straight-line path crosses the OTHER shooter's plane; both converge on the victim.
     w.planes[victim].hp = 1
     w.planes[victim].x, w.planes[victim].y, w.planes[victim].heading_deg = 500.0, 500.0, 270.0
-    w.planes[far].x, w.planes[far].y, w.planes[far].heading_deg = 500.0, 466.0, 90.0    # gap 34
+    w.planes[far].x, w.planes[far].y, w.planes[far].heading_deg = 500.0, 466.0, 90.0  # gap 34
     w.planes[near].x, w.planes[near].y, w.planes[near].heading_deg = 480.0, 500.0, 0.0  # gap 20
 
-    w.tick({0: {far: Action(fire=frozenset({0}))},
-            1: {near: Action(fire=frozenset({0}))},
-            2: {}})
+    w.tick({0: {far: Action(fire=frozenset({0}))}, 1: {near: Action(fire=frozenset({0}))}, 2: {}})
 
     assert not w.planes[victim].alive
     assert w.kills[1] == [victim], "the round that struck first (squadron 1) must get the kill"
@@ -140,8 +138,7 @@ def test_a_plane_at_zero_hp_dies_and_emits_an_event():
     w.planes[b].x, w.planes[b].y = 515.0, 500.0
     w.tick({0: {a: Action(fire=frozenset({0}))}, 1: {b: Action()}})
     assert not w.planes[b].alive
-    assert any(isinstance(e, PlaneDestroyed) and e.plane_id == b
-               for e in w.views()[1].events)
+    assert any(isinstance(e, PlaneDestroyed) and e.plane_id == b for e in w.views()[1].events)
 
 
 def test_a_dead_plane_contributes_no_vision_and_is_no_contact():
@@ -170,6 +167,7 @@ def test_planes_pass_through_each_other():
 def test_the_same_seed_reproduces_the_same_match():
     """Firing every tick exercises World.rng's per-shot dispersion draw, not just spawn jitter --
     that consumer must not desync a replay either."""
+
     def run():
         w = World(ARENA, [["scout", "fighter"], ["scout", "fighter"]], CLASSES, seed=99)
         for _ in range(60):
@@ -206,9 +204,9 @@ def test_each_plane_reads_bearings_from_its_own_nose():
     ca = planes[a].contacts
     cb = planes[b].contacts
     assert len(ca) == 1 and len(cb) == 1
-    assert ca[0].id == cb[0].id                      # same contact, one squadron union
-    assert ca[0].bearing_deg == pytest.approx(0.0)   # dead ahead of a
-    assert cb[0].bearing_deg > 5.0                   # off to the left of b
+    assert ca[0].id == cb[0].id  # same contact, one squadron union
+    assert ca[0].bearing_deg == pytest.approx(0.0)  # dead ahead of a
+    assert cb[0].bearing_deg > 5.0  # off to the left of b
     assert ca[0].range != cb[0].range
 
 
@@ -236,7 +234,7 @@ def test_a_plane_that_sees_nothing_itself_still_receives_the_squadron_contact():
 
     planes = {p.id: p for p in w.views()[0].planes}
     assert len(planes[scout].contacts) == 1
-    assert len(planes[bomber].contacts) == 1              # knows, though it cannot see
+    assert len(planes[bomber].contacts) == 1  # knows, though it cannot see
     assert planes[bomber].contacts[0].seen_by == (scout,)  # and knows who is looking
 
 
@@ -251,10 +249,11 @@ def test_views_is_idempotent_within_a_tick():
 
 def test_different_seeds_produce_different_spawns():
     """The seed must actually vary the match, or a fixed seed set has zero variance."""
+
     def spawns(seed):
         w = World(ARENA, [["scout", "fighter"], ["scout", "fighter"]], CLASSES, seed=seed)
-        return [(round(p.x, 6), round(p.y, 6), round(p.heading_deg, 6))
-                for _, p in sorted(w.planes.items())]
+        return [(round(p.x, 6), round(p.y, 6), round(p.heading_deg, 6)) for _, p in sorted(w.planes.items())]
+
     assert spawns(1) != spawns(999)
     assert spawns(1) == spawns(1)
 
@@ -266,6 +265,7 @@ def test_spawns_stay_symmetric_between_squadrons():
     so a seed changes only the formation's orientation.
     """
     import math
+
     w = World(ARENA, [["fighter"], ["fighter"]], CLASSES, seed=17)
     cx, cy = ARENA[0] / 2.0, ARENA[1] / 2.0
     ps = [p for _, p in sorted(w.planes.items())]
@@ -281,6 +281,7 @@ def test_spawns_stay_symmetric_between_squadrons():
 def test_spawns_stay_symmetric_for_squadrons_of_two():
     """The absolute slot offset used to break this: a 90-unit radius delta at seed 17."""
     import math
+
     w = World(ARENA, [["scout", "fighter"], ["scout", "fighter"]], CLASSES, seed=17)
     cx, cy = ARENA[0] / 2.0, ARENA[1] / 2.0
     per_sq = {}
@@ -303,7 +304,7 @@ def test_squadron_streams_are_independent():
     w = _world()
     a = [w.views()[0].rng.random() for _ in range(3)]
     w2 = _world()
-    _ = w2.views()[1].rng.random()          # squadron 1 draws first
+    _ = w2.views()[1].rng.random()  # squadron 1 draws first
     b = [w2.views()[0].rng.random() for _ in range(3)]
     assert a == b, "one squadron's draws perturbed another's stream"
 

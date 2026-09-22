@@ -24,7 +24,7 @@ from .state import API_VERSION, Action
 
 try:
     ENGINE_VERSION = version("skybattle")
-except PackageNotFoundError:      # a source checkout on PYTHONPATH, never installed
+except PackageNotFoundError:  # a source checkout on PYTHONPATH, never installed
     ENGINE_VERSION = "unknown"
 """Read from package metadata rather than retyped here, so `uv version --bump` stays the single
 source and a replay header can never claim a version the package does not have. The fallback is
@@ -32,9 +32,13 @@ deliberately not a version number: an uninstalled checkout cannot know one, and 
 stamping a stale guess into a header whose whole job is saying what produced the replay."""
 
 
-def make_header(seed: int, arena: tuple[float, float], squadrons: list[list[str]],
-                table_path: Path | None = None,
-                bot_paths: list[str | Path] | None = None) -> dict:
+def make_header(
+    seed: int,
+    arena: tuple[float, float],
+    squadrons: list[list[str]],
+    table_path: Path | None = None,
+    bot_paths: list[str | Path] | None = None,
+) -> dict:
     """Everything needed to know whether two results are comparable.
 
     The reproducibility triple is (seed, class-table hash, bot files): `bot_paths` records each
@@ -77,15 +81,19 @@ class _Writer:
 
 
 class ThinWriter(_Writer):
-    def record(self, tick: int, actions: dict[int, Action],
-               statuses: dict[int, str]) -> None:
-        self._fh.write(json.dumps({
-            "tick": tick,
-            # The engine/bot wire format, not a second hand-written copy of it: the thin
-            # stream is canonical, so a format change must not be able to miss it.
-            "actions": protocol.encode_actions(dict(sorted(actions.items()))),
-            "statuses": {str(sq): s for sq, s in sorted(statuses.items())},
-        }) + "\n")
+    def record(self, tick: int, actions: dict[int, Action], statuses: dict[int, str]) -> None:
+        self._fh.write(
+            json.dumps(
+                {
+                    "tick": tick,
+                    # The engine/bot wire format, not a second hand-written copy of it: the thin
+                    # stream is canonical, so a format change must not be able to miss it.
+                    "actions": protocol.encode_actions(dict(sorted(actions.items()))),
+                    "statuses": {str(sq): s for sq, s in sorted(statuses.items())},
+                }
+            )
+            + "\n"
+        )
 
 
 class FatWriter(_Writer):
@@ -97,33 +105,45 @@ class FatWriter(_Writer):
         visible: dict[str, list[int]] = {}
         for sq in sorted(world.damage_dealt):
             mine = [p for p in living if p.squadron == sq]
-            seen = sorted({
-                e.id for e in living if e.squadron != sq
-                for o in mine if vision.sees(o, e, world.arena)
-            })
+            seen = sorted(
+                {e.id for e in living if e.squadron != sq for o in mine if vision.sees(o, e, world.arena)}
+            )
             visible[str(sq)] = seen
 
-        self._fh.write(json.dumps({
-            "tick": world.tick_no,
-            "planes": [
+        self._fh.write(
+            json.dumps(
                 {
-                    "id": p.id, "squadron": p.squadron, "kind": p.kind,
-                    "x": round(p.x, 3), "y": round(p.y, 3),
-                    "heading_deg": round(p.heading_deg, 3), "speed": round(p.speed, 3),
-                    "hp": p.hp, "hp_max": p.cls.hp, "alive": p.alive,
-                    "ammo": list(p.ammo), "cooldown": list(p.cooldown),
-                    "cone_deg": p.cls.cone_deg, "cone_range": p.cls.cone_range,
-                    "rear_cone_deg": p.cls.rear_cone_deg,
-                    "rear_cone_range": p.cls.rear_cone_range,
-                    "bubble_range": p.cls.bubble_range,
+                    "tick": world.tick_no,
+                    "planes": [
+                        {
+                            "id": p.id,
+                            "squadron": p.squadron,
+                            "kind": p.kind,
+                            "x": round(p.x, 3),
+                            "y": round(p.y, 3),
+                            "heading_deg": round(p.heading_deg, 3),
+                            "speed": round(p.speed, 3),
+                            "hp": p.hp,
+                            "hp_max": p.cls.hp,
+                            "alive": p.alive,
+                            "ammo": list(p.ammo),
+                            "cooldown": list(p.cooldown),
+                            "cone_deg": p.cls.cone_deg,
+                            "cone_range": p.cls.cone_range,
+                            "rear_cone_deg": p.cls.rear_cone_deg,
+                            "rear_cone_range": p.cls.rear_cone_range,
+                            "bubble_range": p.cls.bubble_range,
+                        }
+                        for _, p in sorted(world.planes.items())
+                    ],
+                    "bullets": [[round(b.x, 2), round(b.y, 2), b.squadron] for b in world.bullets],
+                    "visible": visible,
+                    "scores": {str(sq): s for sq, s in sorted(world.scores().items())},
+                    "degraded": sorted(str(sq) for sq, s in statuses.items() if s != "ok"),
                 }
-                for _, p in sorted(world.planes.items())
-            ],
-            "bullets": [[round(b.x, 2), round(b.y, 2), b.squadron] for b in world.bullets],
-            "visible": visible,
-            "scores": {str(sq): s for sq, s in sorted(world.scores().items())},
-            "degraded": sorted(str(sq) for sq, s in statuses.items() if s != "ok"),
-        }) + "\n")
+            )
+            + "\n"
+        )
 
 
 def read(path: str | Path) -> tuple[dict, list[dict]]:

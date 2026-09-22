@@ -24,8 +24,12 @@ _cos = [round(math.cos(2.0 * math.pi * i / TRIG_STEPS), _TABLE_DP) for i in rang
 
 # Exact values at the quarter turns; the table is off by ~1e-17 there and those four
 # headings appear constantly (spawn orientations, rear guns), so pin them.
-for _i, _s, _c in ((0, 0.0, 1.0), (TRIG_STEPS // 4, 1.0, 0.0),
-                   (TRIG_STEPS // 2, 0.0, -1.0), (3 * TRIG_STEPS // 4, -1.0, 0.0)):
+for _i, _s, _c in (
+    (0, 0.0, 1.0),
+    (TRIG_STEPS // 4, 1.0, 0.0),
+    (TRIG_STEPS // 2, 0.0, -1.0),
+    (3 * TRIG_STEPS // 4, -1.0, 0.0),
+):
     _sin[_i], _cos[_i] = _s, _c
 
 _SIN, _COS = tuple(_sin), tuple(_cos)
@@ -79,8 +83,7 @@ def direction_to(ax: float, ay: float, bx: float, by: float, w: float, h: float)
     return normalize_deg(math.degrees(math.atan2(dy, dx)))
 
 
-def bearing_to(ax: float, ay: float, heading_deg: float,
-               bx: float, by: float, w: float, h: float) -> float:
+def bearing_to(ax: float, ay: float, heading_deg: float, bx: float, by: float, w: float, h: float) -> float:
     """Bearing from a's nose toward b, in (-180, 180]. Negative is to the right.
 
     Rotate the *frame* and then wrap. Never wrap a bearing and then add to it: `angle_diff`

@@ -19,11 +19,34 @@ from skybattle.state import (
 
 def _view():
     g = Gun(name="forward", bearing_deg=0.0, dispersion_deg=8.0, ammo=80, cooldown_ticks_left=2)
-    c = Contact(id=4, kind="bomber", x=1.0, y=2.0, heading_deg=90.0, speed=4.0, hp=120,
-                bearing_deg=-30.0, range=250.0, seen_by=(0, 1))
-    p = OwnPlane(id=0, kind="scout", x=10.0, y=20.0, heading_deg=45.0, speed=5.0, hp=70,
-                 hp_max=70, stall_speed=3.0, corner_speed=5.0, max_speed=9.0, guns=(g,),
-                 contacts=(c,), bubble_range=120.0)
+    c = Contact(
+        id=4,
+        kind="bomber",
+        x=1.0,
+        y=2.0,
+        heading_deg=90.0,
+        speed=4.0,
+        hp=120,
+        bearing_deg=-30.0,
+        range=250.0,
+        seen_by=(0, 1),
+    )
+    p = OwnPlane(
+        id=0,
+        kind="scout",
+        x=10.0,
+        y=20.0,
+        heading_deg=45.0,
+        speed=5.0,
+        hp=70,
+        hp_max=70,
+        stall_speed=3.0,
+        corner_speed=5.0,
+        max_speed=9.0,
+        guns=(g,),
+        contacts=(c,),
+        bubble_range=120.0,
+    )
     return View(tick=12, arena=(2000.0, 2000.0), planes=(p,), events=())
 
 
@@ -110,4 +133,4 @@ def test_the_encoder_pins_ownplane_layout():
     is exactly the one a hardcoded slice would drop without error.
     """
     assert protocol._SCALARS == OwnPlane._fields.index("guns")
-    assert OwnPlane._fields[protocol._SCALARS:] == ("guns", "contacts", "bubble_range")
+    assert OwnPlane._fields[protocol._SCALARS :] == ("guns", "contacts", "bubble_range")

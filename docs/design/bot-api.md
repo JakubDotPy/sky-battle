@@ -14,10 +14,10 @@ API_VERSION = 1
 
 
 class Bot:
-    def __init__(self, config):        # once per match
+    def __init__(self, config):  # once per match
         self.last_seen = {}
 
-    def act(self, state):              # once per tick
+    def act(self, state):  # once per tick
         return {plane.id: Action(...) for plane in state.planes}
 ```
 
@@ -27,8 +27,8 @@ owns the entire protocol. This is the single highest-value ergonomic decision in
 knowing to debug via stderr — convention that fails the first time somebody learning reaches for `print`.
 
 ```python
-real_stdout = os.fdopen(os.dup(1), "wb")   # private protocol channel
-os.dup2(2, 1)                              # anything printed goes to stderr
+real_stdout = os.fdopen(os.dup(1), "wb")  # private protocol channel
+os.dup2(2, 1)  # anything printed goes to stderr
 sys.stdout = sys.stderr
 ```
 
@@ -65,9 +65,9 @@ one ship", a brutal trap for a mistake as ordinary as looping over a stale unit 
 ```python
 @dataclass(frozen=True, kw_only=True)
 class Action:
-    throttle: float = 0.0          # [0, 1] lever position -> thrust
-    steer: float = 0.0             # [-1, +1] control input; positive = left (CCW)
-    fire: frozenset[int] = frozenset()   # gun ids to fire this tick; empty = hold fire
+    throttle: float = 0.0  # [0, 1] lever position -> thrust
+    steer: float = 0.0  # [-1, +1] control input; positive = left (CCW)
+    fire: frozenset[int] = frozenset()  # gun ids to fire this tick; empty = hold fire
 ```
 
 **Composite, because a real cockpit is.** The throttle is worked by one hand, the controls by the other hand and the
@@ -107,16 +107,16 @@ An empty set holds fire, which is the default and costs nothing.
 
   ```python
   class Contact(NamedTuple):
-      id: int                    # stable while continuously visible; a NEW id after re-acquisition
-      kind: str                  # "scout" | "fighter" | "bomber"
-      x: float                   # absolute, for the bot's own memory
+      id: int  # stable while continuously visible; a NEW id after re-acquisition
+      kind: str  # "scout" | "fighter" | "bomber"
+      x: float  # absolute, for the bot's own memory
       y: float
-      heading_deg: float         # absolute, 0 = east, CCW positive
-      speed: float               # units per tick
-      hp: int                    # visible battle damage
-      bearing_deg: float         # relative to the reading plane's nose, (-180, 180]
-      range: float               # pre-wrapped shortest distance
-      seen_by: tuple[int, ...]   # which of my planes can see it right now
+      heading_deg: float  # absolute, 0 = east, CCW positive
+      speed: float  # units per tick
+      hp: int  # visible battle damage
+      bearing_deg: float  # relative to the reading plane's nose, (-180, 180]
+      range: float  # pre-wrapped shortest distance
+      seen_by: tuple[int, ...]  # which of my planes can see it right now
   ```
 
   No `ammo`, no `cooldown`, no `age`, and nothing at all about a contact once it is lost.
@@ -327,9 +327,10 @@ Because the contract is a pure function, a bot is directly unit-testable with no
 
 ```python
 def test_turns_toward_contact():
-    state = make_state(squadron=[plane(id=0, x=100, y=100, heading_deg=0.0)],
-                       contacts=[contact(x=200, y=100)])
-    assert act(state)[0].steer == 0.0      # already pointing at it
+    state = make_state(
+        squadron=[plane(id=0, x=100, y=100, heading_deg=0.0)], contacts=[contact(x=200, y=100)]
+    )
+    assert act(state)[0].steer == 0.0  # already pointing at it
 ```
 
 Three things ship alongside the engine: a **snapshot builder** (`make_state`, `plane`, `contact`) with sane defaults

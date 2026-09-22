@@ -19,6 +19,7 @@ def test_tunnelling_across_the_seam_is_caught():
 def test_naive_endpoint_sampling_would_have_missed_that():
     # proves the swept test earns its keep: neither endpoint is inside the plane
     from skybattle import geom
+
     for sx in (990.0, 1020.0 % W):
         assert geom.distance(sx, 500.0, 5.0, 500.0, W, H) > 12.0
 

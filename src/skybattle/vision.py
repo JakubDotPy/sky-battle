@@ -18,8 +18,17 @@ QUANT_RANGE = 1
 """Decimal places for bot-visible ranges."""
 
 
-def in_cone(ox: float, oy: float, heading_deg: float, cone_deg: float, cone_range: float,
-            tx: float, ty: float, w: float, h: float) -> bool:
+def in_cone(
+    ox: float,
+    oy: float,
+    heading_deg: float,
+    cone_deg: float,
+    cone_range: float,
+    tx: float,
+    ty: float,
+    w: float,
+    h: float,
+) -> bool:
     """Whether (tx, ty) lies inside a cone of the given width and range.
 
     Both comparisons use QUANT-rounded values, for two reasons. `geom.distance` and
@@ -36,8 +45,7 @@ def in_cone(ox: float, oy: float, heading_deg: float, cone_deg: float, cone_rang
     return abs(bearing) <= cone_deg / 2.0
 
 
-def in_bubble(ox: float, oy: float, bubble_range: float,
-              tx: float, ty: float, w: float, h: float) -> bool:
+def in_bubble(ox: float, oy: float, bubble_range: float, tx: float, ty: float, w: float, h: float) -> bool:
     """Whether (tx, ty) lies within a circular vision bubble of the given radius.
 
     Heading-independent short-range awareness, unioned with the cones: a pilot looking
@@ -58,13 +66,23 @@ def sees(observer, target, arena: tuple[float, float]) -> bool:
     # close-range case before either cone check runs.
     if in_bubble(observer.x, observer.y, c.bubble_range, target.x, target.y, w, h):
         return True
-    if in_cone(observer.x, observer.y, observer.heading_deg, c.cone_deg, c.cone_range,
-               target.x, target.y, w, h):
+    if in_cone(
+        observer.x, observer.y, observer.heading_deg, c.cone_deg, c.cone_range, target.x, target.y, w, h
+    ):
         return True
     # The rear cone is a separate frame rotated 180 degrees. Rotate the FRAME, never do
     # arithmetic on an already-wrapped bearing.
-    return in_cone(observer.x, observer.y, observer.heading_deg + 180.0,
-                   c.rear_cone_deg, c.rear_cone_range, target.x, target.y, w, h)
+    return in_cone(
+        observer.x,
+        observer.y,
+        observer.heading_deg + 180.0,
+        c.rear_cone_deg,
+        c.rear_cone_range,
+        target.x,
+        target.y,
+        w,
+        h,
+    )
 
 
 class ContactTracker:
@@ -78,18 +96,16 @@ class ContactTracker:
         self._assigned: dict[tuple[int, int], int] = {}
         self._counter = itertools.count(1)
 
-    def update(self, squadron: int,
-               visible_ids: tuple[int, ...]) -> tuple[dict[int, int], tuple[int, ...]]:
+    def update(self, squadron: int, visible_ids: tuple[int, ...]) -> tuple[dict[int, int], tuple[int, ...]]:
         """Returns (enemy plane id -> contact id, contact ids lost this tick)."""
         visible = set(visible_ids)
-        lost = tuple(sorted(
-            cid for (sq, pid), cid in self._assigned.items()
-            if sq == squadron and pid not in visible
-        ))
+        lost = tuple(
+            sorted(cid for (sq, pid), cid in self._assigned.items() if sq == squadron and pid not in visible)
+        )
         for key in [k for k in self._assigned if k[0] == squadron and k[1] not in visible]:
             del self._assigned[key]
         mapping = {}
-        for pid in sorted(visible):          # sorted: id allocation must not depend on set order
+        for pid in sorted(visible):  # sorted: id allocation must not depend on set order
             key = (squadron, pid)
             if key not in self._assigned:
                 self._assigned[key] = next(self._counter)
@@ -97,8 +113,13 @@ class ContactTracker:
         return mapping, lost
 
 
-def build_contacts(reader, seen: dict[int, tuple[int, ...]], enemies: Mapping[int, object],
-                   ids: dict[int, int], arena: tuple[float, float]) -> tuple[Contact, ...]:
+def build_contacts(
+    reader,
+    seen: dict[int, tuple[int, ...]],
+    enemies: Mapping[int, object],
+    ids: dict[int, int],
+    arena: tuple[float, float],
+) -> tuple[Contact, ...]:
     """One reader plane's contact list.
 
     `seen` maps enemy plane id to the ids of MY planes that can see it -- the squadron union.
@@ -108,19 +129,22 @@ def build_contacts(reader, seen: dict[int, tuple[int, ...]], enemies: Mapping[in
     """
     w, h = arena
     out = []
-    for pid in sorted(seen):                 # sorted: contact order must be deterministic
+    for pid in sorted(seen):  # sorted: contact order must be deterministic
         e = enemies[pid]
-        out.append(Contact(
-            id=ids[pid],
-            kind=e.kind,
-            x=e.x,
-            y=e.y,
-            heading_deg=e.heading_deg,
-            speed=e.speed,
-            hp=e.hp,
-            bearing_deg=round(geom.bearing_to(reader.x, reader.y, reader.heading_deg,
-                                              e.x, e.y, w, h), QUANT_ANGLE),
-            range=round(geom.distance(reader.x, reader.y, e.x, e.y, w, h), QUANT_RANGE),
-            seen_by=seen[pid],
-        ))
+        out.append(
+            Contact(
+                id=ids[pid],
+                kind=e.kind,
+                x=e.x,
+                y=e.y,
+                heading_deg=e.heading_deg,
+                speed=e.speed,
+                hp=e.hp,
+                bearing_deg=round(
+                    geom.bearing_to(reader.x, reader.y, reader.heading_deg, e.x, e.y, w, h), QUANT_ANGLE
+                ),
+                range=round(geom.distance(reader.x, reader.y, e.x, e.y, w, h), QUANT_RANGE),
+                seen_by=seen[pid],
+            )
+        )
     return tuple(out)

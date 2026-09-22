@@ -55,7 +55,6 @@ class Bot:
                 # Corner speed turns best, so ease off when a hard turn is needed.
                 throttle=0.4 if abs(lead_bearing) > 30.0 else 0.9,
                 steer=max(min(lead_bearing / 25.0, 1.0), -1.0),
-                fire=(frozenset({0}) if ready and abs(lead_bearing) <= ON_TARGET_DEG
-                      else frozenset()),
+                fire=(frozenset({0}) if ready and abs(lead_bearing) <= ON_TARGET_DEG else frozenset()),
             )
         return out

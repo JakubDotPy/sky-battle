@@ -78,8 +78,8 @@ Which also means the declaration has to be **a literal list of string kinds** �
 list, a loop, or a call to a function that returns one:
 
 ```python
-SQUADRON = ["bomber", "bomber"]      # fine -- a literal list of string constants
-SQUADRON = ["scout"] * 2             # rejected: not a list of string literals
+SQUADRON = ["bomber", "bomber"]  # fine -- a literal list of string constants
+SQUADRON = ["scout"] * 2  # rejected: not a list of string literals
 ```
 
 Every kind named has to exist in the class table — `bomber`, `fighter` or `scout` today, see
@@ -154,11 +154,11 @@ per tick, not as a generator you can rely on to keep advancing between calls to 
 ```python
 class OwnPlane(NamedTuple):
     id: int
-    kind: str                        # "scout" | "fighter" | "bomber"
+    kind: str  # "scout" | "fighter" | "bomber"
     x: float
     y: float
-    heading_deg: float                # absolute, 0 = east, CCW positive
-    speed: float                      # units per tick
+    heading_deg: float  # absolute, 0 = east, CCW positive
+    speed: float  # units per tick
     hp: int
     hp_max: int
     stall_speed: float
@@ -166,7 +166,7 @@ class OwnPlane(NamedTuple):
     max_speed: float
     guns: tuple[Gun, ...]
     contacts: tuple[Contact, ...]
-    bubble_range: float               # this plane's own vision bubble radius
+    bubble_range: float  # this plane's own vision bubble radius
 ```
 
 Own-plane state is never fogged — everything about a plane you control, you see exactly. That
@@ -179,27 +179,27 @@ Each gun:
 ```python
 class Gun(NamedTuple):
     name: str
-    bearing_deg: float          # fixed mount angle; 0 = forward, 180 = rear
-    dispersion_deg: float       # precision, not a traverse -- you cannot aim this
+    bearing_deg: float  # fixed mount angle; 0 = forward, 180 = rear
+    dispersion_deg: float  # precision, not a traverse -- you cannot aim this
     ammo: int
     cooldown_ticks_left: int
-    muzzle_speed: float         # needed to compute a firing solution -- see leader.py
+    muzzle_speed: float  # needed to compute a firing solution -- see leader.py
 ```
 
 ### Contacts
 
 ```python
 class Contact(NamedTuple):
-    id: int              # stable only while continuously visible
+    id: int  # stable only while continuously visible
     kind: str
-    x: float              # absolute -- for YOUR OWN memory
+    x: float  # absolute -- for YOUR OWN memory
     y: float
-    heading_deg: float    # absolute
+    heading_deg: float  # absolute
     speed: float
-    hp: int                # visible battle damage
-    bearing_deg: float    # relative to the reading plane's nose
+    hp: int  # visible battle damage
+    bearing_deg: float  # relative to the reading plane's nose
     range: float
-    seen_by: tuple[int, ...]   # which of YOUR planes currently sees it
+    seen_by: tuple[int, ...]  # which of YOUR planes currently sees it
 ```
 
 Contacts carry both an absolute position and a bearing/range relative to whichever of your
@@ -292,7 +292,7 @@ the repository — it is a real player that ships with the engine, is exercised 
 and is the reference opponent the other samples are measured against.
 
 ```python title="samples/leader.py"
---8<-- "samples/leader.py"
+--8 < --"samples/leader.py"
 ```
 
 Save it as `mybot.py` and fly it against the simplest sample:
@@ -354,6 +354,7 @@ subprocess, and no I/O. `skybattle.harness` ships builders with sane defaults fo
 ```python
 from skybattle.harness import make_state, plane, contact
 from mybot import Bot
+
 
 def test_holds_fire_when_not_aligned():
     state = make_state(planes=[plane(id=0, contacts=(contact(bearing_deg=45.0),))])

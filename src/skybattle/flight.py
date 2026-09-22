@@ -32,9 +32,18 @@ def turn_rate_deg(cls: PlaneClass, speed: float, damage_factor: float) -> float:
     return (a + (b - a) * t) * damage_factor
 
 
-def step(cls: PlaneClass, x: float, y: float, heading_deg: float, speed: float,
-         hp: int, hp_max: int, throttle: float, steer: float,
-         arena: tuple[float, float]) -> tuple[float, float, float, float]:
+def step(
+    cls: PlaneClass,
+    x: float,
+    y: float,
+    heading_deg: float,
+    speed: float,
+    hp: int,
+    hp_max: int,
+    throttle: float,
+    steer: float,
+    arena: tuple[float, float],
+) -> tuple[float, float, float, float]:
     """Advance one plane one tick. Returns (x, y, heading_deg, speed)."""
     w, h = arena
     df = damage_factor(hp, hp_max)

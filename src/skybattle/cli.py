@@ -34,12 +34,14 @@ def _rounds_index(replay_dir: Path) -> list[dict]:
     paths = sorted(replay_dir.glob("*.fat.jsonl.gz"), key=lambda p: p.stat().st_mtime, reverse=True)
     for path in paths:
         header, ticks = replay.read(path)
-        rounds.append({
-            "name": path.name,
-            "seed": header["seed"],
-            "bots": header["bots"],
-            "frames": len(ticks),
-        })
+        rounds.append(
+            {
+                "name": path.name,
+                "seed": header["seed"],
+                "bots": header["bots"],
+                "frames": len(ticks),
+            }
+        )
     return rounds
 
 
@@ -125,8 +127,10 @@ def _print_result_lines(result: MatchResult, labels: dict[int, str]) -> None:
         ticks = sum(r.ticks for r in result.rounds)
         strikes = sum(r.strikes[sq] for r in result.rounds)
         forfeits = sum(1 for r in result.rounds if r.forfeited[sq])
-        print(f"squadron {sq} ({labels[sq]}): {result.totals[sq]:8.1f} points  "
-              f"accepted {acc}/{ticks}  strikes {strikes}  forfeits {forfeits}")
+        print(
+            f"squadron {sq} ({labels[sq]}): {result.totals[sq]:8.1f} points  "
+            f"accepted {acc}/{ticks}  strikes {strikes}  forfeits {forfeits}"
+        )
 
 
 def _squadron_for(bot_path: Path, classes: dict) -> list[str]:
@@ -151,10 +155,17 @@ def _play(game_file: Path, replay_dir: Path | None) -> int:
 
     squadrons = [p.squadron for p in game.players]
     classes = load_classes(arena=game.arena)
-    result = run_match([p.bot for p in game.players], squadrons, seed=game.seed,
-                       rounds=game.rounds, arena=game.arena, classes=classes,
-                       deadline=game.deadline, replay_dir=replay_dir,
-                       round_tick_limit=game.ticks_per_round)
+    result = run_match(
+        [p.bot for p in game.players],
+        squadrons,
+        seed=game.seed,
+        rounds=game.rounds,
+        arena=game.arena,
+        classes=classes,
+        deadline=game.deadline,
+        replay_dir=replay_dir,
+        round_tick_limit=game.ticks_per_round,
+    )
 
     # Just the player's name -- `_print_result_lines` already wraps it in one pair of
     # parens, so adding the bot filename here too would nest it redundantly, e.g.
@@ -227,16 +238,23 @@ def main(argv: list[str] | None = None) -> int:
         duel.error("two bot paths are required unless --rules is given")
 
     arena = (args.arena[0], args.arena[1])
-    classes = load_classes(arena=arena)     # validates cone ranges against this arena
+    classes = load_classes(arena=arena)  # validates cone ranges against this arena
     try:
         squadrons = [_squadron_for(args.bot_a, classes), _squadron_for(args.bot_b, classes)]
     except ValueError as exc:
         print(f"error: {exc}")
         return 1
 
-    result = run_match([args.bot_a, args.bot_b], squadrons, seed=args.seed,
-                       rounds=args.rounds, arena=arena, classes=classes,
-                       deadline=args.deadline, replay_dir=args.replay_dir)
+    result = run_match(
+        [args.bot_a, args.bot_b],
+        squadrons,
+        seed=args.seed,
+        rounds=args.rounds,
+        arena=arena,
+        classes=classes,
+        deadline=args.deadline,
+        replay_dir=args.replay_dir,
+    )
 
     labels = {0: args.bot_a.name, 1: args.bot_b.name}
     _print_result_lines(result, labels)

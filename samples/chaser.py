@@ -29,7 +29,6 @@ class Bot:
                 throttle=0.9,
                 # bearing is already relative to my nose: positive is left, so steer positive
                 steer=max(min(target.bearing_deg / 30.0, 1.0), -1.0),
-                fire=(frozenset({0}) if ready and abs(target.bearing_deg) <= ON_TARGET_DEG
-                      else frozenset()),
+                fire=(frozenset({0}) if ready and abs(target.bearing_deg) <= ON_TARGET_DEG else frozenset()),
             )
         return out

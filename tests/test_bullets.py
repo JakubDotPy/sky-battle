@@ -47,7 +47,7 @@ def test_rear_gun_fires_astern():
     # Zero out dispersion: this test is about the fixed mount's bearing, not its precision.
     rear = CLASSES["bomber"].guns[1]._replace(dispersion_deg=0.0)
     b = bullets.spawn(rear, 1, 0, 0, 500.0, 500.0, 0.0, 0.0, random.Random(1))
-    assert b.vx < 0.0                       # heading east, rear gun shoots west
+    assert b.vx < 0.0  # heading east, rear gun shoots west
     assert b.vy == pytest.approx(0.0, abs=1e-9)
 
 
@@ -63,12 +63,11 @@ def test_advance_moves_and_wraps():
     b = bullets.spawn(_fwd(), 0, 0, 0, 995.0, 500.0, 0.0, 0.0, random.Random(1))
     nxt = bullets.advance(b, ARENA)
     assert nxt is not None
-    assert nxt.x < 100.0                    # wrapped past the seam
+    assert nxt.x < 100.0  # wrapped past the seam
 
 
 def test_bullet_expires():
-    b = bullets.spawn(_fwd(), 0, 0, 0, 500.0, 500.0, 0.0, 0.0,
-                      random.Random(1))._replace(ticks_left=1)
+    b = bullets.spawn(_fwd(), 0, 0, 0, 500.0, 500.0, 0.0, 0.0, random.Random(1))._replace(ticks_left=1)
     assert bullets.advance(b, ARENA) is None
 
 
@@ -84,6 +83,7 @@ def test_dispersion_stays_inside_the_arc():
 
 def test_a_wider_gun_groups_worse():
     """Dispersion is precision: the rear mount scatters more than a fixed forward gun."""
+
     def spread(gun):
         rng = random.Random(7)
         offs = []
@@ -92,6 +92,7 @@ def test_a_wider_gun_groups_worse():
             base = gun.bearing_deg
             offs.append(geom.angle_diff(math.degrees(math.atan2(b.vy, b.vx)), base))
         return statistics.pstdev(offs)
+
     assert spread(CLASSES["bomber"].guns[1]) > spread(CLASSES["bomber"].guns[0])
 
 
@@ -104,7 +105,7 @@ def test_the_rear_gun_fires_straight_astern_not_aimed():
         b = bullets.spawn(rear, 1, 0, 0, 500.0, 500.0, 0.0, 0.0, rng)
         fired = math.degrees(math.atan2(b.vy, b.vx))
         offs.append(geom.angle_diff(fired, 180.0))
-    assert abs(sum(offs) / len(offs)) < 1.0        # centred on the mount, not on any target
+    assert abs(sum(offs) / len(offs)) < 1.0  # centred on the mount, not on any target
 
 
 def test_a_zero_dispersion_gun_fires_exactly_along_its_mount():
@@ -119,6 +120,7 @@ def test_dispersion_is_reproducible_from_the_seed():
     def shots(seed):
         rng = random.Random(seed)
         return [bullets.spawn(fwd, 0, 0, 0, 500.0, 500.0, 0.0, 0.0, rng).vy for _ in range(20)]
+
     assert shots(11) == shots(11)
     assert shots(11) != shots(12)
 

@@ -26,8 +26,7 @@ class Bot:
         for p in state.planes:
             for c in p.contacts:
                 self.last_seen[c.id] = (c.x, c.y, state.tick)
-        self.last_seen = {cid: v for cid, v in self.last_seen.items()
-                          if state.tick - v[2] <= FORGET_AFTER}
+        self.last_seen = {cid: v for cid, v in self.last_seen.items() if state.tick - v[2] <= FORGET_AFTER}
 
         out = {}
         for p in state.planes:
@@ -55,8 +54,7 @@ class Bot:
             return Action(
                 throttle=0.9,
                 steer=max(min(bearing / 25.0, 1.0), -1.0),
-                fire=(frozenset({0}) if ready and abs(bearing) <= ON_TARGET_DEG
-                      else frozenset()),
+                fire=(frozenset({0}) if ready and abs(bearing) <= ON_TARGET_DEG else frozenset()),
             )
         if self.last_seen:
             # Nothing in sight: sweep the freshest remembered position.

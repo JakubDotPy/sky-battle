@@ -2,7 +2,7 @@ import time
 
 from skybattle.state import Action
 
-time.sleep(0.4)          # stands in for a heavy module-level import
+time.sleep(0.4)  # stands in for a heavy module-level import
 
 
 class Bot:

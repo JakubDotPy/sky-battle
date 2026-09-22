@@ -9,8 +9,21 @@ BOTS = Path(__file__).parent / "bots"
 
 def _view(tick):
     g = Gun(name="forward", bearing_deg=0.0, dispersion_deg=8.0, ammo=80, cooldown_ticks_left=0)
-    p = OwnPlane(id=0, kind="scout", x=0.0, y=0.0, heading_deg=0.0, speed=5.0, hp=70, hp_max=70,
-                 stall_speed=3.0, corner_speed=5.0, max_speed=9.0, guns=(g,), contacts=())
+    p = OwnPlane(
+        id=0,
+        kind="scout",
+        x=0.0,
+        y=0.0,
+        heading_deg=0.0,
+        speed=5.0,
+        hp=70,
+        hp_max=70,
+        stall_speed=3.0,
+        corner_speed=5.0,
+        max_speed=9.0,
+        guns=(g,),
+        contacts=(),
+    )
     return View(tick=tick, arena=(2000.0, 2000.0), planes=(p,), events=())
 
 
@@ -40,8 +53,7 @@ def test_a_timeout_re_applies_the_last_accepted_action():
 
 
 def test_the_first_tick_gets_a_generous_budget_for_module_imports():
-    with BotProcess(BOTS / "slow_first_tick.py",
-                    tick_deadline=0.05, first_tick_deadline=3.0) as bot:
+    with BotProcess(BOTS / "slow_first_tick.py", tick_deadline=0.05, first_tick_deadline=3.0) as bot:
         _, status = bot.exchange(_view(1), rng_seed=1)
         assert status == "ok"
         assert bot.strikes == 0
@@ -68,8 +80,9 @@ def test_a_stale_reply_never_becomes_the_next_ticks_answer():
     response to tick 2 is directly observable. Without the tick echo and the stale drain, the
     engine accepts it and every later tick is misaligned while the match still looks fine.
     """
-    with BotProcess(BOTS / "tick_stamper_slow_first.py",
-                    tick_deadline=0.05, first_tick_deadline=0.05, strike_limit=99) as bot:
+    with BotProcess(
+        BOTS / "tick_stamper_slow_first.py", tick_deadline=0.05, first_tick_deadline=0.05, strike_limit=99
+    ) as bot:
         raw, status = bot.exchange(_view(1), rng_seed=1)
         assert status == "timeout"
 
@@ -81,8 +94,7 @@ def test_a_stale_reply_never_becomes_the_next_ticks_answer():
             if status == "ok":
                 stamp = round(raw[0].throttle * 1000.0)
                 assert stamp == tick, (
-                    f"accepted tick {stamp}'s action in answer to tick {tick} - stale reply "
-                    f"was not drained"
+                    f"accepted tick {stamp}'s action in answer to tick {tick} - stale reply was not drained"
                 )
                 return
         raise AssertionError("bot never produced an accepted reply")
@@ -123,7 +135,7 @@ def test_two_early_misses_do_not_forfeit():
     with BotProcess(BOTS / "good.py", strike_limit=3) as bot:
         bot.exchange(_view(1), rng_seed=1)
         bot._strike("timeout")
-        bot._strike("timeout")            # two unlucky ticks, not consecutive in play
+        bot._strike("timeout")  # two unlucky ticks, not consecutive in play
         assert not bot.forfeited, "forfeited on the second strike of the match"
         for tick in range(2, 12):
             _, status = bot.exchange(_view(tick), rng_seed=1)
