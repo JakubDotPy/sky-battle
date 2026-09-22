@@ -95,8 +95,8 @@ def read_api_version(bot_path: Path) -> int | None:
 def check_api_version(bot_path: Path) -> None:
     """Refuse a bot written against an API version this engine does not speak.
 
-    `bot-api.md` specifies this check; until now the constant existed and was stamped into
-    replay headers but was never compared against anything a bot declared.
+    Declaring API_VERSION is optional: a bot that omits it is accepted, because within a
+    major version the state and action types only ever gain fields.
     """
     declared = read_api_version(bot_path)
     if declared is not None and declared != API_VERSION:

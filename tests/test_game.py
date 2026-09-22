@@ -238,8 +238,6 @@ def test_the_cli_play_command_runs_and_prints_a_result_line_per_player(tmp_path,
 
 
 def test_a_bot_declaring_an_unknown_api_version_is_refused(tmp_path):
-    """bot-api.md specifies this check; until now nothing compared a bot's declaration
-    against the engine's own version."""
     bot = tmp_path / "future.py"
     bot.write_text('SQUADRON = ["scout", "fighter"]\nAPI_VERSION = 99\n')
     game = tmp_path / "game.toml"

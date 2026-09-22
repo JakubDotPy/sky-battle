@@ -158,10 +158,8 @@ Both `zensical` commands must run from `docs-site/` — it looks for `zensical.t
 
 - **Players and hosts:** `docs-site/` — the game, the classes with comparative diagrams, writing a bot, hosting a
   game. Every stat on those pages is read live from the balance table at build time, so it cannot drift.
-- **Design and rationale:** `docs/design/` — why the arena wraps, why turn rate peaks in the middle, what the bot
-  API guarantees, and which technology choices were measured rather than assumed.
-- **Balance:** every number lives in `src/skybattle/classes.toml`, and it is meant to be edited. The design docs
-  record which values are placeholders and what is known to be untuned.
+- **Balance:** every number lives in `src/skybattle/classes.toml`, and it is meant to be edited. Nothing in that
+  table has been tuned as a set; treat every value as a placeholder until a balance pass says otherwise.
 
 ## How it fits together
 
